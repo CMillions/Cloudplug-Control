@@ -1,6 +1,6 @@
 # File:     main.py
 # Author:   Connor DeCamp
-# Date:     07/08/2021
+# Created:  07/08/2021
 #
 # Some parts taken from https://realpython.com/qt-designer-python/
 

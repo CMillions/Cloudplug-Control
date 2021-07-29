@@ -1,5 +1,14 @@
+# File:     main.py
+# Author:   Connor DeCamp
+# Created:  07/08/2021
+#
+# Window class to interact with the auto-generated gui.py file
+# from QtDesigner. The signal connections will be defined
+# in this file.
+
 from gui import Ui_MainWindow
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QListWidgetItem, QTableWidgetItem, QMainWindow
+from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
+                            QListWidgetItem, QTableWidgetItem, QMainWindow
 from typing import Tuple
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -8,14 +17,17 @@ class Window(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.connectSignalSlots()
 
+        # Allow columns to adjust to their contents
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.tableWidget.resizeColumnsToContents()
-
+        
+        # TODO: remove later, just testing the table
         for i in range(3):
             self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))
 
 
     def connectSignalSlots(self):
+        # Connect the 'Reprogram Cloudplugs' button to the correct callback
         self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
 
     def appendRowInSFPTable(self, values: Tuple) -> None:
