@@ -1,7 +1,8 @@
 # File:     main.py
 # Author:   Connor DeCamp
 # Date:     07/08/2021
-# Taken from https://realpython.com/qt-designer-python/
+#
+# Some parts taken from https://realpython.com/qt-designer-python/
 
 # Standard imports
 from random import randint
@@ -20,7 +21,6 @@ from sfp import SFP
 
 def main():
 
-
     # Create the Qt Application and an instance of the window class
     app = QApplication(sys.argv)
     win = Window()
@@ -34,10 +34,11 @@ def main():
         database='sfp_info'
     )
 
-    # Populate table in window with the SFP data
+    # Populate table in GUI window with the SFP data
     mycursor = mydb.cursor()
     mycursor.execute("SELECT * FROM sfp")
 
+    # Append data to sfp table in GUI
     for sfp_data in mycursor:
         win.appendRowInSFPTable(sfp_data)
 
