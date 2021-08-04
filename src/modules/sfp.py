@@ -12,8 +12,8 @@
 
 from dataclasses import dataclass
 from random import randint
-from typing import Callable, List
-from convert import *
+from typing import List
+from modules.convert import *
 from enum import Enum
 
 @dataclass

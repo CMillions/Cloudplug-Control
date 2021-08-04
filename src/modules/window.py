@@ -8,13 +8,16 @@
 
 from PyQt5 import QtWidgets
 import PyQt5
-from gui import Ui_MainWindow
+from modules.gui import Ui_MainWindow
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
                             QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
                             QDialog, QWidget
 from typing import Tuple
+import mysql.connector
 
-from memory_map_dialog import MemoryMapTableWindow
+
+from modules.memory_map_dialog import MemoryMapDialog
+from modules.sfp import SFP
 
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -37,11 +40,41 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
 
-    def display_sfp_memory_map(self):
+    def display_sfp_memory_map(self, clicked_model_index):
 
-        self.memory_dialog = MemoryMapTableWindow()
-        self.memory_dialog.setWindowModality(1)
-        self.memory_dialog.show()
+        # The SFP the user double clicked from the table
+        selected_row_in_table = clicked_model_index.row()
+
+        selected_sfp_id = int(self.tableWidget.item(
+            selected_row_in_table, 0
+        ).text())
+
+        # TODO: MOVE THIS OUT LATER
+        mydb = mysql.connector.connect(
+            host='localhost',
+            user='connord',
+            password='cloudplug',
+            database='sfp_info'
+        )
+
+        mycursor = mydb.cursor()
+        mycursor.execute(f"SELECT * FROM page_a0 WHERE id={selected_sfp_id};")
+
+        page_a0 = []
+        page_a2 = [0] * 256
+
+        # should only be one result...
+        for res in mycursor:
+            for i in range(1, len(res)):
+                page_a0.append(res[i])
+
+        sfp = SFP(page_a0, page_a2)
+
+        # Create SFP object after reading from database
+
+        memory_dialog = MemoryMapDialog(self)
+        memory_dialog.initializeTableValues(sfp)
+        memory_dialog.show()
 
     def appendRowInSFPTable(self, values: Tuple) -> None:
 

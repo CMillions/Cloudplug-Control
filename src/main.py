@@ -16,8 +16,8 @@ import mysql.connector
 from typing import List
 
 # User defined imports
-from window import Window
-from sfp import SFP
+from modules.window import Window
+from modules.sfp import SFP
 
 def main():
 
