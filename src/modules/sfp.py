@@ -39,7 +39,7 @@ class SFP:
     page_a2 : List[int]
 
     # Holds the calibration type of the module
-    calibration_type: CalibrationType
+    calibration_type: CalibrationType = CalibrationType.UNKNOWN
 
     def __post_init__(self):
 

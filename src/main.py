@@ -49,7 +49,7 @@ def main():
 
     win.setWindowTitle('CloudPlug Control')
     win.show()
-    sys.exit(app.exec())
+    sys.exit(app.exec_())
 
 
     

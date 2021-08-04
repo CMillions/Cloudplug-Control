@@ -6,10 +6,15 @@
 # from QtDesigner. The signal connections will be defined
 # in this file.
 
+from PyQt5 import QtWidgets
+import PyQt5
 from gui import Ui_MainWindow
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
-                            QListWidgetItem, QTableWidgetItem, QMainWindow
+                            QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
+                            QDialog, QWidget
 from typing import Tuple
+
+from memory_map_dialog import MemoryMapTableWindow
 
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -29,6 +34,14 @@ class Window(QMainWindow, Ui_MainWindow):
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
         self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
+
+        self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
+
+    def display_sfp_memory_map(self):
+
+        self.memory_dialog = MemoryMapTableWindow()
+        self.memory_dialog.setWindowModality(1)
+        self.memory_dialog.show()
 
     def appendRowInSFPTable(self, values: Tuple) -> None:
 
