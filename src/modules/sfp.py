@@ -16,7 +16,6 @@ from typing import List
 from modules.convert import *
 from enum import Enum
 
-@dataclass
 class SFP:
     '''
     Has two lists of integers that represent the memory map
@@ -38,10 +37,20 @@ class SFP:
     # Holds the data values from page 0xA2 of the SFP memory map
     page_a2 : List[int]
 
+    memory_pages: dict
+
     # Holds the calibration type of the module
     calibration_type: CalibrationType = CalibrationType.UNKNOWN
 
-    def __post_init__(self):
+    def __init__(self, page_a0: List[int], page_a2: List[int]):
+
+        self.memory_pages = {}
+
+        self.page_a0 = page_a0
+        self.page_a2 = page_a2
+
+        self.add_memory_page(0xA0, page_a0)
+        self.add_memory_page(0xA2, page_a2)
 
         # Sets the calibration type flag for use in
         # the calculation functions
@@ -50,6 +59,11 @@ class SFP:
         elif self.page_a0[92] & 0x10:
             self.calibration_type = self.CalibrationType.EXTERNAL
         
+    def add_memory_page(self, page_code: int, page_values: List[int]) -> None:
+        self.memory_pages[page_code] = page_values
+
+    def get_page(self, page_number: int) -> List[int]:
+        return self.memory_pages[page_number]
 
     def get_page_a0(self) -> List[int]:
         return self.page_a0

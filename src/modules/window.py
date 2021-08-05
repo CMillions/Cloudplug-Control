@@ -18,6 +18,7 @@ import mysql.connector
 
 from modules.memory_map_dialog import MemoryMapDialog
 from modules.sfp import SFP
+from random import randint
 
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -66,7 +67,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # should only be one result...
         for res in mycursor:
             for i in range(1, len(res)):
-                page_a0.append(res[i])
+                page_a0.append(res[i] + randint(0, 255))
 
         sfp = SFP(page_a0, page_a2)
 
