@@ -18,6 +18,7 @@ from typing import List
 # User defined imports
 from modules.window import Window
 from modules.sfp import SFP
+from modules.sql_connection import SQLConnection
 
 def main():
 
@@ -27,15 +28,11 @@ def main():
 
     # Setup the database connection
     # TODO: Move to a different file? Maybe a .ENV?
-    mydb = mysql.connector.connect(
-        host='localhost',
-        user='connord',
-        password='cloudplug',
-        database='sfp_info'
-    )
+
+    mydb = SQLConnection()
 
     # Populate table in GUI window with the SFP data
-    mycursor = mydb.cursor()
+    mycursor = mydb.cursor
     mycursor.execute("SELECT * FROM sfp")
 
     # Append data to sfp table in GUI

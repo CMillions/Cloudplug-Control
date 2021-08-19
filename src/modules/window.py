@@ -13,12 +13,14 @@ from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
                             QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
                             QDialog, QWidget
 from typing import Tuple
-import mysql.connector
-
 
 from modules.memory_map_dialog import MemoryMapDialog
 from modules.sfp import SFP
+from modules.sql_connection import SQLConnection
+
 from random import randint
+
+
 
 class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -34,6 +36,9 @@ class Window(QMainWindow, Ui_MainWindow):
         for i in range(3):
             self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))
 
+        # Holds the database connection for the program
+        self.db_connection = SQLConnection()
+        
 
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
@@ -51,14 +56,8 @@ class Window(QMainWindow, Ui_MainWindow):
         ).text())
 
         # TODO: MOVE THIS OUT LATER
-        mydb = mysql.connector.connect(
-            host='localhost',
-            user='connord',
-            password='cloudplug',
-            database='sfp_info'
-        )
 
-        mycursor = mydb.cursor()
+        mycursor = self.db_connection.cursor
         mycursor.execute(f"SELECT * FROM page_a0 WHERE id={selected_sfp_id};")
 
         page_a0 = []

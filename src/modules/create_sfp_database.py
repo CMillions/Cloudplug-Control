@@ -100,12 +100,12 @@ def main():
     create_page_table(mycursor, 'page_a0')
 
     #T= Testing insertion to database
-    #sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
-    #vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
-    #mycursor.execute(sql, vals)
-    #insert_sfp_data_to_table(mycursor, "sfp", list(vals))
-    #mydb.commit()
-    #print(mycursor.rowcount, "record inserted")
+    sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
+    vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
+    mycursor.execute(sql, vals)
+    insert_sfp_data_to_table(mycursor, "sfp", list(vals))
+    mydb.commit()
+    print(mycursor.rowcount, "record inserted")
 
     print("\n\nReading all entries from sfp table")
     sql = "SELECT * from sfp"
