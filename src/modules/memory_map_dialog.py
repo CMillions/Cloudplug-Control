@@ -82,8 +82,10 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         else:
             return
 
-        self.updateTable()
 
+        self.tableWidget.setUpdatesEnabled(False)
+        self.updateTable()
+        self.tableWidget.setUpdatesEnabled(True)
 
     def updateTable(self):
 

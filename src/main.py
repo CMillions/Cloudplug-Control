@@ -26,13 +26,19 @@ def main():
     app = QApplication(sys.argv)
     win = Window()
 
-    # Setup the database connection
-    # TODO: Move to a different file? Maybe a .ENV?
+    mydb = win.db_connection
 
-    mydb = SQLConnection()
+    if mydb is None:
+        print('Error when connecting to MySQL databse')
+        return -1
 
     # Populate table in GUI window with the SFP data
     mycursor = mydb.cursor
+
+    if mycursor is None:
+        print('Error getting cursor from database')
+        return -1
+
     mycursor.execute("SELECT * FROM sfp")
 
     # Append data to sfp table in GUI
