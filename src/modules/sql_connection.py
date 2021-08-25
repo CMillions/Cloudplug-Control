@@ -35,7 +35,8 @@ class SQLConnection:
                 host=db_host,
                 user=db_user,
                 password=db_pass,
-                database=db_name
+                database=db_name,
+                connection_timeout=5
             )
 
             self.cursor = self.connection.cursor()
@@ -43,10 +44,12 @@ class SQLConnection:
         except Exception as ex:
             print('Error')
             print(ex)
+            self.connection = None
+            self.cursor = None
             return
 
     def close(self):
-        if self.connection:
+        if self.connection is not None:
             self.connection.close()
 
     def __del__(self):
