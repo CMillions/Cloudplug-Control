@@ -7,7 +7,6 @@
 # in this file.
 
 from PyQt5 import QtWidgets
-import PyQt5
 from modules.gui import Ui_MainWindow
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
                             QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
@@ -21,8 +20,10 @@ from modules.sql_connection import SQLConnection
 from random import randint
 
 
-
 class Window(QMainWindow, Ui_MainWindow):
+
+    db_connected: bool
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -37,8 +38,14 @@ class Window(QMainWindow, Ui_MainWindow):
             self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))
 
         # Holds the database connection for the program
-        self.db_connection = SQLConnection()
+        self.db_connector = SQLConnection()
         
+        # If the connection fails, update the state
+        # of the connection in the main window
+        if self.db_connector.connection is None:
+            self.db_connected = False
+        else:
+            self.db_connected = True
 
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
