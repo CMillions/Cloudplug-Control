@@ -46,7 +46,8 @@ class SQLConnection:
             return
 
     def close(self):
-        self.connection.close()
+        if self.connection:
+            self.connection.close()
 
     def __del__(self):
         self.close()
