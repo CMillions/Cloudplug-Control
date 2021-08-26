@@ -50,6 +50,10 @@ class SQLConnection:
 
     def close(self):
         if self.connection is not None:
+<<<<<<< HEAD
+=======
+
+>>>>>>> d9a3b59c76ab9b2170475ae0df9822f137e0cafb
             self.connection.close()
 
     def __del__(self):
