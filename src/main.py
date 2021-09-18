@@ -5,17 +5,14 @@
 # Some parts taken from https://realpython.com/qt-designer-python/
 
 # Standard imports
-from random import randint
 import sys
 from PyQt5.QtWidgets import QApplication, QErrorMessage
-from PyQt5.uic import loadUi
 
 from typing import List
 
 # User defined imports
-from modules.window import Window
-from modules.sfp import SFP
-from modules.sql_connection import SQLConnection
+from modules.core.window import Window
+
 
 def main():
 
@@ -43,7 +40,10 @@ def main():
         error_dialog.exec()
         return -1
 
-    mycursor.execute("SELECT * FROM sfp")
+    sql_command = 'SELECT * FROM sfp_info.sfp'
+    mycursor.execute(sql_command)
+
+    main_window.appendToDebugLog(f'Executing SQL Command: {sql_command}')
 
     # Append data to sfp table in GUI
     for sfp_data in mycursor:

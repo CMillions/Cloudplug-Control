@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QHeaderView, \
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
-from modules.memory_map_dialog_autogen import Ui_Dialog
-from modules.sfp import SFP
+from modules.core.memory_map_dialog_autogen import Ui_Dialog
+from modules.core.sfp import SFP
 from enum import Enum
 from typing import List
 

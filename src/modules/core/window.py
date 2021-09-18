@@ -7,18 +7,21 @@
 # in this file.
 
 from PyQt5 import QtWidgets
-from modules.gui import Ui_MainWindow
+from PyQt5.QtCore import QObject
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
-                            QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
-                            QDialog, QWidget
-from typing import Tuple
+                            QListWidgetItem, QPlainTextEdit, QTableWidgetItem, QMainWindow, QMenu, \
+                            QDialog, QTextBrowser, QWidget
 
-from modules.memory_map_dialog import MemoryMapDialog
-from modules.sfp import SFP
-from modules.sql_connection import SQLConnection
+from modules.core.gui import Ui_MainWindow
+from modules.core.memory_map_dialog import MemoryMapDialog
+from modules.core.sfp import SFP
+
+from modules.network.network_threads import BroadcastThread
+from modules.network.sql_connection import SQLConnection
 
 from random import randint
-
+from typing import Tuple
+import time
 
 class Window(QMainWindow, Ui_MainWindow):
 
@@ -65,7 +68,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # TODO: MOVE THIS OUT LATER
 
         mycursor = self.db_connector.cursor
-        mycursor.execute(f"SELECT * FROM page_a0 WHERE id={selected_sfp_id};")
+        mycursor.execute(f"SELECT * FROM sfp_info.page_a0 WHERE id={selected_sfp_id};")
 
         page_a0 = []
         page_a2 = [0] * 256
@@ -130,3 +133,12 @@ class Window(QMainWindow, Ui_MainWindow):
         
         for model_index in selected_sfp_persona:
             print(f'{self.tableWidget.model().data(model_index) = }')
+
+    def appendToDebugLog(self, text: str):
+        
+        text_edit = self.logTab.findChild(QPlainTextEdit, 'plainTextEdit')
+
+        if text_edit:
+            formatted_time = time.strftime('%H:%M:%S', time.localtime())
+            text_edit.appendPlainText(f'[{formatted_time}]: {text}')
+    
