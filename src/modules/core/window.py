@@ -156,7 +156,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')
 
+        # DEBUG message
         print(raw_data)
+
         received_message = unpackRawBytes(raw_data)
 
         self.appendToDebugLog(received_message)
