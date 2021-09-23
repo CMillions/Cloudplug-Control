@@ -5,11 +5,14 @@
 # This module contains functions and classes related to
 # networking for the CloudPlugs.
 
-from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
-from PyQt5.QtNetwork import QNetworkInterface, QUdpSocket, QHostAddress, QAbstractSocket
 import time
+from typing import List
+
+from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
+from PyQt5.QtNetwork import QNetworkInterface, QUdpSocket, QHostAddress, QAbstractSocket, QTcpSocket, QTcpServer
 
 from modules.network.message import Message, MessageCode
+from modules.network.tcp_server import MyTCPServer
 
 def get_LAN_ip_address() -> str:
     '''
@@ -103,7 +106,6 @@ class BroadcastThread(QThread):
             # Write discovery message
             # print('Trying to write discovery message')
             udp_socket.writeDatagram(byte_array, broadcast_addr, port)
-
             while udp_socket.hasPendingDatagrams():
                 msg_tuple = udp_socket.readDatagram(PACKET_SIZE)
 
@@ -130,3 +132,26 @@ class BroadcastThread(QThread):
                 self.device_response.emit(msg_tuple)
 
             time.sleep(1)
+
+
+class TcpServerThread(QThread):
+    
+    device_response = pyqtSignal(object)
+    
+    log_signal = pyqtSignal(object)
+
+    def run(self):
+        
+        self.tcp_server = MyTCPServer()
+        self.tcp_server.log_signal.connect(self.emit_log)
+        self.tcp_server.openSession()
+
+        # Shouldn't be needed
+        self.exec()
+
+
+    def emit_log(self, data: str) -> pyqtSignal:
+        '''
+        Emits a string of data as a pyqtSignal.
+        '''
+        self.log_signal.emit(data)

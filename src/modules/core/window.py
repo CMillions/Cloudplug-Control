@@ -19,7 +19,7 @@ from modules.core.memory_map_dialog import MemoryMapDialog
 from modules.core.sfp import SFP
 
 from modules.network.message import MessageCode, Message, unpackRawBytes
-from modules.network.network_threads import BroadcastThread
+from modules.network.network_threads import BroadcastThread, TcpServerThread
 from modules.network.sql_connection import SQLConnection
 
 from random import randint
@@ -49,8 +49,13 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.appendToDebugLog('Starting device discovery thread')
         self.discovery_thread = BroadcastThread()
-        self.discovery_thread.device_response.connect(self.handleClientDiscovery)
+        self.discovery_thread.device_response.connect(self.handleClientMessage)
         self.discovery_thread.start()
+
+        self.appendToDebugLog('Starting TCP server thread')
+        self.tcp_server_thread = TcpServerThread()
+        self.tcp_server_thread.log_signal.connect(self.appendToDebugLog)
+        self.tcp_server_thread.start()
 
 
     def connectSignalSlots(self):
@@ -149,7 +154,7 @@ class Window(QMainWindow, Ui_MainWindow):
             print(f'{self.tableWidget.model().data(model_index) = }')
 
 
-    def handleClientDiscovery(self, contents_ip_port_tuple: Tuple):
+    def handleClientMessage(self, contents_ip_port_tuple: Tuple):
         raw_data:    bytes         = contents_ip_port_tuple[0]
         sender_ip:   QHostAddress  = contents_ip_port_tuple[1].toString()
         sender_port: int           = contents_ip_port_tuple[2]
@@ -157,7 +162,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')
 
         # DEBUG message
-        print(raw_data)
+        # print(raw_data)
 
         received_message = unpackRawBytes(raw_data)
 
@@ -167,6 +172,8 @@ class Window(QMainWindow, Ui_MainWindow):
             self.appendToDebugLog(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
         elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
+        else:
+            self.appendToDebugLog(f"Unknown data from {sender_ip}:{sender_port}")
 
 
     # Utility functions
