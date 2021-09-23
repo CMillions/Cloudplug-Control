@@ -21,7 +21,7 @@ def get_LAN_ip_address() -> str:
     # For each address in the list, check if it's an IPv4
     # address and not a loopback address
     for address in ip_list:
-        if address.protocol() == QAbstractSocket.IPv4Protocol:# and not address.isLoopback():
+        if address.protocol() == QAbstractSocket.IPv4Protocol and not address.isLoopback():
             return address.toString()
 
     return None
@@ -86,6 +86,8 @@ class BroadcastThread(QThread):
         bind_addr = QHostAddress(local_ip_str)
         broadcast_addr = QHostAddress(broadcast_ip_str)
 
+        print(f'Broadcast IP: {broadcast_ip_str = }')
+
         udp_socket = QUdpSocket()
         udp_socket.bind(bind_addr, port)
 
@@ -99,6 +101,7 @@ class BroadcastThread(QThread):
 
         while True:
             # Write discovery message
+            # print('Trying to write discovery message')
             udp_socket.writeDatagram(byte_array, broadcast_addr, port)
 
             while udp_socket.hasPendingDatagrams():
@@ -114,7 +117,7 @@ class BroadcastThread(QThread):
                 # on LAN, we don't want to do anything if the
                 # recipient is the host machine
 
-                print(f'{local_ip_str = }\t{sender_ip_addr = }')
+                # print(f'{local_ip_str = }\t{sender_ip_addr = }')
 
                 if sender_ip_addr == local_ip_str:
                     break
@@ -126,4 +129,4 @@ class BroadcastThread(QThread):
                 # the main UI thread
                 self.device_response.emit(msg_tuple)
 
-            time.sleep(5)
+            time.sleep(1)

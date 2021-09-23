@@ -6,9 +6,9 @@
 
 # Standard imports
 import sys
-from PyQt5.QtWidgets import QApplication, QErrorMessage
-
 from typing import List
+
+from PyQt5.QtWidgets import QApplication, QErrorMessage
 
 # User defined imports
 from modules.core.window import Window

@@ -6,6 +6,7 @@
 # from QtDesigner. The signal connections will be defined
 # in this file.
 
+from struct import unpack
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QObject
 from PyQt5.QtNetwork import QHostAddress
@@ -17,6 +18,7 @@ from modules.core.gui import Ui_MainWindow
 from modules.core.memory_map_dialog import MemoryMapDialog
 from modules.core.sfp import SFP
 
+from modules.network.message import MessageCode, Message, unpackRawBytes
 from modules.network.network_threads import BroadcastThread
 from modules.network.sql_connection import SQLConnection
 
@@ -152,7 +154,18 @@ class Window(QMainWindow, Ui_MainWindow):
         sender_ip:   QHostAddress  = contents_ip_port_tuple[1].toString()
         sender_port: int           = contents_ip_port_tuple[2]
 
-        self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')
+        # self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')
+
+        print(raw_data)
+        received_message = unpackRawBytes(raw_data)
+
+        self.appendToDebugLog(received_message)
+
+        if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
+            self.appendToDebugLog(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
+        elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
+            self.appendToDebugLog(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
+
 
     # Utility functions
     def appendToDebugLog(self, text: str):
