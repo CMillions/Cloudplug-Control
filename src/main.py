@@ -41,9 +41,8 @@ def main():
         return -1
 
     sql_command = 'SELECT * FROM sfp_info.sfp'
-    mycursor.execute(sql_command)
-
     main_window.appendToDebugLog(f'Executing SQL Command: {sql_command}')
+    mycursor.execute(sql_command)    
 
     # Append data to sfp table in GUI
     for sfp_data in mycursor:

@@ -9,7 +9,7 @@ from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
 from PyQt5.QtNetwork import QNetworkInterface, QUdpSocket, QHostAddress, QAbstractSocket
 import time
 
-from modules.network.message import Message, MessageCodes
+from modules.network.message import Message, MessageCode
 
 def get_LAN_ip_address() -> str:
     '''
@@ -21,7 +21,7 @@ def get_LAN_ip_address() -> str:
     # For each address in the list, check if it's an IPv4
     # address and not a loopback address
     for address in ip_list:
-        if address.protocol() == QAbstractSocket.IPv4Protocol and not address.isLoopback():
+        if address.protocol() == QAbstractSocket.IPv4Protocol:# and not address.isLoopback():
             return address.toString()
 
     return None
@@ -89,7 +89,7 @@ class BroadcastThread(QThread):
         udp_socket = QUdpSocket()
         udp_socket.bind(bind_addr, port)
 
-        discover_msg = Message(MessageCodes.DISCOVER, 'DISCOVER')
+        discover_msg = Message(MessageCode.DISCOVER, 'DISCOVER')
         raw_bytes = discover_msg.to_network_message()
 
         byte_array = QByteArray()
@@ -113,11 +113,14 @@ class BroadcastThread(QThread):
                 # Since the message is broadcast to all machines
                 # on LAN, we don't want to do anything if the
                 # recipient is the host machine
+
+                print(f'{local_ip_str = }\t{sender_ip_addr = }')
+
                 if sender_ip_addr == local_ip_str:
                     break
                 
                 # Print response to the console
-                print(f'BroadcastThread:: {binary_contents}\t{sender_ip_addr}\t{sender_port}')
+                # print(f'BroadcastThread:: {binary_contents}\t{sender_ip_addr}\t{sender_port}')
 
                 # Emit response as a signal that can be received by
                 # the main UI thread

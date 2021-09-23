@@ -8,6 +8,7 @@
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QObject
+from PyQt5.QtNetwork import QHostAddress
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
                             QListWidgetItem, QPlainTextEdit, QTableWidgetItem, QMainWindow, QMenu, \
                             QDialog, QTextBrowser, QWidget
@@ -30,7 +31,10 @@ class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+
+        # User-defined setup methods
         self.connectSignalSlots()
+        self.setupDatabase()
 
         # Allow columns to adjust to their contents
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
@@ -40,6 +44,20 @@ class Window(QMainWindow, Ui_MainWindow):
         for i in range(3):
             self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))
 
+
+        self.appendToDebugLog('Starting device discovery thread')
+        self.discovery_thread = BroadcastThread()
+        self.discovery_thread.device_response.connect(self.handleClientDiscovery)
+        self.discovery_thread.start()
+
+
+    def connectSignalSlots(self):
+        # Connect the 'Reprogram Cloudplugs' button to the correct callback
+        self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
+
+        self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
+
+    def setupDatabase(self):
         # Holds the database connection for the program
         self.db_connector = SQLConnection()
         
@@ -49,12 +67,6 @@ class Window(QMainWindow, Ui_MainWindow):
             self.db_connected = False
         else:
             self.db_connected = True
-
-    def connectSignalSlots(self):
-        # Connect the 'Reprogram Cloudplugs' button to the correct callback
-        self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
-
-        self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
 
     def display_sfp_memory_map(self, clicked_model_index):
 
@@ -134,6 +146,15 @@ class Window(QMainWindow, Ui_MainWindow):
         for model_index in selected_sfp_persona:
             print(f'{self.tableWidget.model().data(model_index) = }')
 
+
+    def handleClientDiscovery(self, contents_ip_port_tuple: Tuple):
+        raw_data:    bytes         = contents_ip_port_tuple[0]
+        sender_ip:   QHostAddress  = contents_ip_port_tuple[1].toString()
+        sender_port: int           = contents_ip_port_tuple[2]
+
+        self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')
+
+    # Utility functions
     def appendToDebugLog(self, text: str):
         
         text_edit = self.logTab.findChild(QPlainTextEdit, 'plainTextEdit')
@@ -141,4 +162,5 @@ class Window(QMainWindow, Ui_MainWindow):
         if text_edit:
             formatted_time = time.strftime('%H:%M:%S', time.localtime())
             text_edit.appendPlainText(f'[{formatted_time}]: {text}')
+
     

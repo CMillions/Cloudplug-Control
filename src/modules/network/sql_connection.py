@@ -16,7 +16,8 @@ class SQLConnection:
 
     def __init__(self):
 
-        load_dotenv('.env')
+        env_path = '../.env'
+        load_dotenv(dotenv_path=env_path)
 
         self.connection = None
         self.cursor = None
