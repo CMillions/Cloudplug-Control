@@ -46,6 +46,7 @@ def main():
 
     # Append data to sfp table in GUI
     for sfp_data in mycursor:
+        main_window.appendToDebugLog(f'Adding {sfp_data} to the SFP table')
         main_window.appendRowInSFPTable(sfp_data)
 
 

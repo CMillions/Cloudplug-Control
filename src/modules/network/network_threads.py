@@ -84,6 +84,7 @@ class BroadcastThread(QThread):
         '''
         local_ip_str = get_LAN_ip_address()
         broadcast_ip_str = get_LAN_broadcast_address(local_ip_str)
+
         port = 20100
 
         bind_addr = QHostAddress(local_ip_str)
