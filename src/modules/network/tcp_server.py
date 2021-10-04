@@ -6,6 +6,7 @@ from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
 
 from modules.network.message import Message
+from modules.network.utility import *
 
 class MyTCPServer(QObject):
 
@@ -23,8 +24,7 @@ class MyTCPServer(QObject):
         self.connected_socket_list = []
 
     def openSession(self):
-        from modules.network.network_threads import get_LAN_ip_address
-        
+                
         self.server = QTcpServer()
         self.HOST = get_LAN_ip_address()
         self.PORT = 20100

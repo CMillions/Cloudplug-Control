@@ -1,0 +1,27 @@
+Tests ran on 10/01/2021 at 14:22
+================================
+
+test_get_connector_type (__main__.TestSFPMethods) ... ok
+test_get_encoding (__main__.TestSFPMethods) ... ok
+test_get_ext_identifier (__main__.TestSFPMethods) ... ok
+test_get_identifier (__main__.TestSFPMethods) ... ok
+test_get_om1_link_length (__main__.TestSFPMethods) ... ok
+test_get_om2_link_length (__main__.TestSFPMethods) ... ok
+test_get_om3_link_length (__main__.TestSFPMethods) ... ok
+test_get_om4_link_length (__main__.TestSFPMethods) ... ok
+test_get_rate_identifier (__main__.TestSFPMethods) ... ok
+test_get_signaling_rate_nominal (__main__.TestSFPMethods) ... ok
+test_get_smf_link_length (__main__.TestSFPMethods) ... ok
+test_get_transceiver2 (__main__.TestSFPMethods) ... ok
+test_get_transceiver_info (__main__.TestSFPMethods)
+Tests the get_transceiver_info() method ... ok
+test_get_vendor_name (__main__.TestSFPMethods) ... ok
+test_get_vendor_oui (__main__.TestSFPMethods) ... ok
+test_get_vendor_part_number (__main__.TestSFPMethods) ... ok
+test_get_vendor_revision_level (__main__.TestSFPMethods) ... ok
+test_get_wavelength (__main__.TestSFPMethods) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.003s
+
+OK

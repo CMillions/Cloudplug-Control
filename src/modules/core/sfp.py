@@ -1,11 +1,12 @@
 # Author:       Connor DeCamp
-# Created on:   7/15/2021
+# Created on:   07/15/2021
 #
-# History:      7/19/2021 - Added more getters for page a0
-#               7/20/2021 - Finished getters for page a0
-#               7/27/2021 - Started getters for page a2
-#               7/28/2021 - Continued work on getters for page a2
-#               7/29/2021 - Moved conversions to convert.py
+# History:      07/19/2021 - Added more getters for page a0
+#               07/20/2021 - Finished getters for page a0
+#               07/27/2021 - Started getters for page a2
+#               07/28/2021 - Continued work on getters for page a2
+#               07/29/2021 - Moved conversions to convert.py
+#               10/01/2021 - Fixed get_transceiver() method
 #
 # See SFF-8472 for tables that determine what each
 # value means in the memory map.
@@ -70,7 +71,10 @@ class SFP:
 
     # From Table 5-1 and Table 4-1 from SFF 8024
     def get_identifier(self) -> str:
-        
+        '''
+        Returns the type of transceiver the module has.
+        Uses byte 0 of page 0xA0.
+        '''
         # Use the id_code as an index into array
         # of strings for identifier type
         id_code = self.page_a0[0]
@@ -180,99 +184,105 @@ class SFP:
             return "Vendor specific"
 
     # See comments in method
-    def get_transceiver(self) -> List[str]:
+    def get_transceiver_info(self) -> List[str]:
         """
         Returns the optical/electronic compatibility of the transceiver.
         """      
         # Starting at page 0xA0 byte 3, bytes 3-10 are used
         # to define the transceiver compliance
-    
+
+        # These arrays hold codes that represent the value for each
+        # bit that is set in the corresponding byte. For example,
+        # byte_three_codes[0] is the value we get when bit 0 of byte 3
+        # is set, so if we had 0b00000001 we would add '1X Copper Passive'
+        # to the transceiver type
         byte_three_codes = [
-            '10GBASE-ER',
-            '10GBASE-LRM',
-            '10GBASE-LR',
-            '10GBASE-SR',
-            '1X SX',
-            '1X LX',
+            '1X Copper Passive',
             '1X Copper Active',
-            '1X Copper Passive'
+            '1X LX',
+            '1X SX',
+            '10GBASE-SR',
+            '10GBASE-LR',
+            '10GBASE-LRM',
+            '10GBASE-ER'
         ]
 
         byte_four_codes = [
-            'ESCON MMF, 1310nm LED',
-            'ESCON SMF, 1310nm Laser',
-            'OC-192, short reach',
-            'SONET reach specifier bit 1',
-            'SONET reach specifier bit 2',
-            'OC-48 long reach',
+            'OC-48 short reach',
             'OC-48 intermediate reach',
-            'OC-48 short reach'
+            'OC-48 long reach',
+            'SONET reach specifier bit 2',
+            'SONET reach specifier bit 1',
+            'OC-192, short reach',
+            'ESCON SMF, 1310nm Laser',
+            'ESCON MMF, 1310nm LED'
         ]
 
-        byte_five_codes = [
-            'Reserved',
-            'OC-12, single mode, long reach',
-            'OC-12, single mode, intermediate reach',
-            'OC-12, short reach',
-            'Reserved',
-            'OC-3, single mode, long reach',
+        byte_five_codes = [ 
+            'OC-3, short reach',
             'OC-3, single mode, intermediate reach',
-            'OC-3, short reach'
-        ]
-
-        byte_six_codes = [
-            'BASE-PX',
-            'BASE_BX10',
-            '100BASE-FX',
-            '100BASE-LX/LX10',
-            '1000BASE-T',
-            '1000BASE-CX',
-            '1000BASE-LX',
-            '1000BASE-SX'
-        ]
-
-        byte_seven_codes = [
-            'very long distance (V)',
-            'short distance (S)',
-            'intermidate distance (I)',
-            'long distance (L)',
-            'medium distance (M)',
-            'Shortwave laser, linear Rx (SA)',
-            'Longwave laser (LC)',
-            'Electrical inter-enclosure (EL)'
-        ]
-
-        byte_eight_codes = [
-            'Electrical intra-enclosure (EL)',
-            'Shortwave laser w/o OFC (SN)',
-            'Shortwave laser with OFC (SL)',
-            'Longwave laser (LL)',
-            'Active Cable',
-            'Passive Cable',
+            'OC-3, single mode, long reach',
             'Reserved',
+            'OC-12, short reach',
+            'OC-12, single mode, intermediate reach',
+            'OC-12, single mode, long reach',
             'Reserved'
         ]
 
-        byte_nine_codes = [
-            'Twin Axial Pair (TW)',
-            'Twisted Pair (TP)',
-            'Miniature Coax (MI)',
-            'Video Coax (TV)',
-            'Multimode, 62.5um (M6)',
-            'Multimode, 50um (M5, M5E)',
+        byte_six_codes = [
+            '1000BASE-SX',
+            '1000BASE-LX',
+            '1000BASE-CX',
+            '1000BASE-T',
+            '100BASE-LX/LX10',
+            '100BASE-FX',
+            'BASE_BX10',
+            'BASE-PX',
+        ]
+
+        byte_seven_codes = [ 
+            'Electrical inter-enclosure (EL)',
+            'Longwave laser (LC)',
+            'Shortwave laser, linear Rx (SA)',
+            'medium distance (M)',
+            'long distance (L)',
+            'intermediate distance (I)',
+            'short distance (S)',
+            'very long distance (V)',
+        ]
+
+        byte_eight_codes = [
+            'Reserved'
             'Reserved',
+            'Passive Cable',
+            'Active Cable',
+            'Longwave laser (LL)',
+            'Shortwave laser with OFC (SL)',
+            'Shortwave laser w/o OFC (SN)',
+            'Electrical intra-enclosure (EL)',
+        ]
+
+
+        byte_nine_codes = [
             'Single Mode (SM)'
+            'Reserved',
+            'Multimode, 50um (M5, M5E)',
+            'Multimode, 62.5um (M6)',
+            'Video Coax (TV)',
+            'Miniature Coax (MI)',
+            'Twisted Pair (TP)',
+            'Twin Axial Pair (TW)',
         ]
 
         byte_ten_codes = [
-            '1200 MBytes/sec',
-            '800 MBytes/sec',
-            '1600 MBytes/sec',
-            '400 MBytes/sec',
-            '3200 MBytes/sec',
-            '200 MBytes/sec',
-            'See byte 62 "Fibre Channel Speed 2"',
             '100 MBytes/sec'
+            'See byte 62 "Fibre Channel Speed 2"',
+            '200 MBytes/sec',
+            '3200 MBytes/sec',
+            '400 MBytes/sec',
+            '1600 MBytes/sec',
+            '800 MBytes/sec',
+            '1200 MBytes/sec',
         ]
 
         code_dict = {}
@@ -291,15 +301,19 @@ class SFP:
         # Mask starts at bit 7 and checks down to bit
         # 0. If any are true (!= 0) then we append the
         # corresponding id to the compliance list
-        mask = 0b10000000
         
-
         for byte in range(3, 11):
-            for i in range(8):            
-                if self.page_a0[byte] & mask:
+            mask = 0b10000000
+
+            for i in range(7, -1, -1):            
+                
+                # If we take perform (byte AND mask) / mask, we will get either
+                # zero or one
+
+                if (self.page_a0[byte] & mask) // mask == 1:
                     compliant_with.append(code_dict[byte][i])
 
-            mask = mask // 2
+                mask = mask // 2
 
         return compliant_with
 
@@ -328,11 +342,11 @@ class SFP:
         else:
             return 'Reserved'
 
-    def get_signaling_rate_nominal(self) -> str:
+    def get_signaling_rate_nominal(self) -> int:
         '''
         Returns the nominal signaling rate in units of 100 MBaud.
         '''
-        return str(self.page_a0[12]) + ' * 100 MBaud'
+        return self.page_a0[12]
     
     def get_rate_identifier(self) -> str:
 
@@ -364,38 +378,38 @@ class SFP:
         elif code == 0x20:
             return 'Rate select based on PMDs as defined by 0xA0, byte 36 and 0xA2, byte 67'
 
-    def get_smf_link_length(self) -> str:
+    def get_smf_link_length(self) -> int:
         '''
-        Link lengh supported for single-mode fiber, units of
+        Link length supported for single-mode fiber, units of
         100m, or copper cable attenuation in dB at 25.78 GHz
         '''
-        return f'{self.page_a0[15]} * 10km'
+        return self.page_a0[15]
 
-    def get_om2_link_length(self) -> str:
+    def get_om2_link_length(self) -> int:
         '''
         Link length supported for 50um OM2 fiber
         '''
-        return f'{self.page_a0[16]} * 10m'
+        return self.page_a0[16]
 
-    def get_om1_link_length(self) -> str:
+    def get_om1_link_length(self) -> int:
         '''
         Link length supported for 62.5um OM1 fiber
         '''
-        return f'{self.page_a0[17]} * 10m'
+        return self.page_a0[17]
 
-    def get_om4_link_length(self) -> str:
+    def get_om4_link_length(self) -> int:
         '''
         Link length supported for 50um OM4 fiber in units of 10m,
-        or lengt of copper/direct attach cable in units of m.
+        or length of copper/direct attach cable in units of m.
         '''
-        return f'{self.page_a0[18]} * 10m'
+        return self.page_a0[18]
 
-    def get_om3_link_length(self) -> str:
+    def get_om3_link_length(self) -> int:
         '''
         Link length supported for 50um OM3 fiber, units of 10m.
         Alternatively, copper/direct attach cable multiplier and base value
         '''
-        return f'{self.page_a0[19]}'
+        return self.page_a0[19]
 
     def get_vendor_name(self) -> str:
         '''
@@ -508,30 +522,41 @@ class SFP:
         else:
             return "Reserved"
 
-    def get_vendor_oui(self) -> str:
+    def get_vendor_oui(self) -> List[int]:
         '''
         Get's the SFP vendor IEEE company ID
         '''
-        return f'{self.page_a0[37:39 + 1]}'
+        return self.page_a0[37:39 + 1]
     
     def get_vendor_part_number(self) -> str:
         '''
         Gets the part number provided by SFP vendor in ASCII.
         '''
-        return f'{self.page_a0[40:55 + 1]}'
+        part_number = ''
+
+        for val in self.page_a0[40:55 + 1]:
+            part_number += chr(val)
+
+        return part_number
 
     def get_vendor_revision_level(self) -> str:
         '''
         Gets the revision level for part number provided 
-        by vendor in ASCII.
+        by vendor in ASCII. Returns bytes [56,59]
         '''
-        return f'{self.page_a0[56:59 + 1]}'
+
+        rev_level = ''
+
+        for val in self.page_a0[56:59 + 1]:
+            rev_level += chr(val)
+
+        return rev_level
     
-    def get_wavelength(self) -> str:
+    def get_wavelength(self) -> int:
         '''
-        Gets the laser wavelength (Passive/Active Cable Specification Compliance)
+        Gets the laser wavelength (Passive/Active Cable Specification Compliance) in nm
         '''
-        return f'{self.page_a0[60:61 + 1]}'
+        return self.page_a0[60] << 8 | self.page_a0[61]
 
     def get_fibre_channel_speed2(self) -> str:
         return f'{self.page_a0[62]}'

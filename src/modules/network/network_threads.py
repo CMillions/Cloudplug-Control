@@ -9,43 +9,11 @@ import time
 from typing import List
 
 from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
-from PyQt5.QtNetwork import QNetworkInterface, QUdpSocket, QHostAddress, QAbstractSocket, QTcpSocket, QTcpServer
+from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 
 from modules.network.message import Message, MessageCode
 from modules.network.tcp_server import MyTCPServer
-
-def get_LAN_ip_address() -> str:
-    '''
-    This method retrieves the host machines IP address on the local area network.
-    '''
-    # Gets the list of all addresses on the host machine
-    ip_list = QNetworkInterface.allAddresses()
-
-    # For each address in the list, check if it's an IPv4
-    # address and not a loopback address
-    for address in ip_list:
-        if address.protocol() == QAbstractSocket.IPv4Protocol and not address.isLoopback():
-            return address.toString()
-
-    return None
-
-
-def get_LAN_broadcast_address(local_ip_address: str) -> str:
-    '''
-    Gets the local area network broadcast IP address.
-    '''
-    # Get all listings of network interfaces on the host machine
-    interface_list = QNetworkInterface.allInterfaces()
-
-    # For each entry in each interface, we want to see if the ip
-    # matches our local ip address. If it does, we return the
-    # broadcast address of that
-    for interface in interface_list:
-        for entry in interface.addressEntries():
-            if entry.ip().toString() == local_ip_address:
-                return entry.broadcast().toString()
-
-    return None
+from modules.network.utility import *
 
 
 class BroadcastThread(QThread):
@@ -136,18 +104,31 @@ class BroadcastThread(QThread):
 
 
 class TcpServerThread(QThread):
-    
+    '''
+    A thread that houses the TCP Server used to communicate with
+    CloudPlugs and Docking Stations.
+    '''
     device_response = pyqtSignal(object)
     
     log_signal = pyqtSignal(object)
 
+    ## Starts an infinite loop to handle TCP connections and message processing.
+    # @param self The self object pointer
     def run(self):
-        
+        '''
+        Starts an infinite loop to handle TCP connections and
+        message processing.
+
+        @param self Self pointer object
+        @returns nothing
+        '''
         self.tcp_server = MyTCPServer()
         self.tcp_server.log_signal.connect(self.emit_log)
         self.tcp_server.openSession()
 
-        # Shouldn't be needed
+        # Qt documentation says this shouldn't be needed
+        # but this makes the thread not end so the server can
+        # have an event loop
         self.exec()
 
 
