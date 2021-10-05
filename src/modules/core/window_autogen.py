@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_files/main.ui'
+# Form implementation generated from reading ui file 'resources/ui_files/main.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -105,6 +105,17 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtWidgets.QWidget()
         self.tab_2.setObjectName("tab_2")
+        self.gridLayout_4 = QtWidgets.QGridLayout(self.tab_2)
+        self.gridLayout_4.setObjectName("gridLayout_4")
+        self.dockingStationList = QtWidgets.QListWidget(self.tab_2)
+        self.dockingStationList.setObjectName("dockingStationList")
+        self.gridLayout_4.addWidget(self.dockingStationList, 1, 0, 1, 1)
+        self.readSfpMemoryButton = QtWidgets.QPushButton(self.tab_2)
+        self.readSfpMemoryButton.setObjectName("readSfpMemoryButton")
+        self.gridLayout_4.addWidget(self.readSfpMemoryButton, 2, 0, 1, 1)
+        self.label_4 = QtWidgets.QLabel(self.tab_2)
+        self.label_4.setObjectName("label_4")
+        self.gridLayout_4.addWidget(self.label_4, 0, 0, 1, 1)
         self.tabWidget.addTab(self.tab_2, "")
         self.logTab = QtWidgets.QWidget()
         self.logTab.setEnabled(True)
@@ -127,7 +138,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         self.listWidget.setCurrentRow(-1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -148,5 +159,7 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "Available CloudPlugs"))
         self.label.setText(_translate("MainWindow", "Available SFPs"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "CloudPlug"))
+        self.readSfpMemoryButton.setText(_translate("MainWindow", "Read SFP Memory"))
+        self.label_4.setText(_translate("MainWindow", "Docking Stations"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Docking Station"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.logTab), _translate("MainWindow", "Debug Log"))

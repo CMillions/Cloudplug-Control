@@ -4,8 +4,12 @@ from enum import Enum
 
 class MessageCode(Enum):
     DISCOVER = 0
+
+    # Docking Station Codes
     DOCK_DISCOVER_ACK = 100
-    CLONE_MEMORY = 101
+    CLONE_SFP_MEMORY = 101
+
+    # Cloudplug Codes
     CLOUDPLUG_DISCOVER_ACK = 200
 
 @dataclass

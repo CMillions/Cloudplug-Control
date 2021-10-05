@@ -35,7 +35,7 @@ class BroadcastThread(QThread):
 
     # In this way, our 'server' is trying to discover 'clients' and start
     # connections with them. It's almost like each cloudplug/docking station
-    # is a server and the software then client.
+    # is a server and the software is a client.
 
     # Has a tuple of 3 objects: 
     # (message contents in binary, QHostAddress object, port as an integer)
@@ -108,7 +108,10 @@ class TcpServerThread(QThread):
     A thread that houses the TCP Server used to communicate with
     CloudPlugs and Docking Stations.
     '''
-    device_response = pyqtSignal(object)
+    tcp_server = MyTCPServer()
+
+    client_connected_signal = pyqtSignal(object)
+    client_disconnected_signal = pyqtSignal(object)
     
     log_signal = pyqtSignal(object)
 
@@ -122,18 +125,29 @@ class TcpServerThread(QThread):
         @param self Self pointer object
         @returns nothing
         '''
-        self.tcp_server = MyTCPServer()
-        self.tcp_server.log_signal.connect(self.emit_log)
+
+        
         self.tcp_server.openSession()
 
         # Qt documentation says this shouldn't be needed
-        # but this makes the thread not end so the server can
-        # have an event loop
+        # but this makes the thread stay alive, therefore
+        # the server can have an event loop
         self.exec()
 
 
-    def emit_log(self, data: str) -> pyqtSignal:
+    def send_command_from_ui(self, ip_msg_tuple):
         '''
-        Emits a string of data as a pyqtSignal.
+        This function is used to send commands from the user interface.
+        For example, when a user tries to read SFP memory, that user selects
+        a docking station and then pressed the "Read SFP Memory" button.
+
+        The event of clicking that button is connected to this function, which
+        then calls the tcp_server::sendCommmand method
         '''
-        self.log_signal.emit(data)
+        ip = ip_msg_tuple[0]
+        msg= ip_msg_tuple[1]
+
+        print('network_threads::send_command_from_ui')
+        print(f'Sending {msg} to {ip}')
+
+        self.tcp_server.sendCommand(ip, msg.code, msg.data)
