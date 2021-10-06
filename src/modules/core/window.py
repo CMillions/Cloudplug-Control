@@ -39,7 +39,6 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # User-defined setup methods
         self.connectSignalSlots()
-        self.setupDatabase()
 
         # Allow columns to adjust to their contents
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
@@ -64,8 +63,8 @@ class Window(QMainWindow, Ui_MainWindow):
         tcp_server = self.tcp_server_thread.tcp_server
         tcp_server.client_connected_signal.connect(self.tcpClientConnectHandler)
         tcp_server.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
+        tcp_server.update_ui_signal.connect(self.updateUiSignalHandler)
         tcp_server.log_signal.connect(self.appendToDebugLog)
-
 
         self.send_command_signal.connect(self.tcp_server_thread.send_command_from_ui)
         self.tcp_server_thread.start()
@@ -73,22 +72,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
-        self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
+        self.reprogramButton.clicked.connect(self._refreshSfpTable)
 
         self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
 
         self.readSfpMemoryButton.clicked.connect(self.clone_sfp_memory_button_handler)
-
-    def setupDatabase(self):
-        # Holds the database connection for the program
-        self.db_connector = SQLConnection()
-        
-        # If the connection fails, update the state
-        # of the connection in the main window
-        if self.db_connector.connection is None:
-            self.db_connected = False
-        else:
-            self.db_connected = True
 
     def display_sfp_memory_map(self, clicked_model_index):
 
@@ -101,7 +89,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # TODO: MOVE THIS OUT LATER
 
-        mycursor = self.db_connector.cursor
+        mydb = SQLConnection()
+
+        mycursor = mydb.get_cursor()
         mycursor.execute(f"SELECT * FROM sfp_info.page_a0 WHERE id={selected_sfp_id};")
 
         page_a0 = []
@@ -110,9 +100,13 @@ class Window(QMainWindow, Ui_MainWindow):
         # should only be one result...
         for res in mycursor:
             for i in range(1, len(res)):
-                page_a0.append(res[i] + randint(0, 255))
+                page_a0.append(res[i])
+
+        mydb.close()
 
         sfp = SFP(page_a0, page_a2)
+
+        print(f'{page_a0}')
 
         # Create SFP object after reading from database
 
@@ -129,8 +123,6 @@ class Window(QMainWindow, Ui_MainWindow):
 
         rowPosition = self.tableWidget.rowCount()        
         self.tableWidget.insertRow(rowPosition)
-
-        print(values)
 
         self.tableWidget.setItem(rowPosition, 0, QTableWidgetItem(str(values[ID])))
         self.tableWidget.setItem(rowPosition, 1, QTableWidgetItem(values[VENDOR_ID]))
@@ -187,9 +179,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
-            self.dockingStationList.addItem(QListWidgetItem(sender_ip))
+            self.appendToDebugLog(f"Awaiting TCP connection from {sender_ip}...")
         elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
+            self.appendToDebugLog(f"Awaiting TCP connection from {sender_ip}...")
         else:
             self.appendToDebugLog(f"Unknown data from {sender_ip}:{sender_port}")
 
@@ -231,6 +224,29 @@ class Window(QMainWindow, Ui_MainWindow):
         for item in self.dockingStationList.findItems(data, QtCore.Qt.MatchExactly):
             row_of_item = self.dockingStationList.row(item)
             self.dockingStationList.takeItem(row_of_item) # removeListItem didn't work
+
+    def updateUiSignalHandler(self, code: MessageCode):
+        
+        if code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
+            self.appendToDebugLog("A docking station successfully, cloned SFP memory")
+            self._refreshSfpTable()
+
+    def _refreshSfpTable(self):
+        sql_statement = "SELECT * FROM sfp"
+        self.appendToDebugLog(f"Executing SQL STATEMENT: {sql_statement}")
+        
+        db = SQLConnection()
+
+        cursor = db.get_cursor()
+        cursor.execute(sql_statement)
+
+        self.tableWidget.setRowCount(0)
+
+        for data_tuple in cursor:
+            print(data_tuple)
+            self.appendRowInSFPTable(data_tuple)
+
+        db.close()
 
     # Utility functions
     def appendToDebugLog(self, text: str):

@@ -50,6 +50,9 @@ class SQLConnection:
             self.cursor = None
             return
 
+    def get_cursor(self):
+        return self.connection.cursor()
+
     def close(self):
         if self.connection is not None:
             self.connection.close()

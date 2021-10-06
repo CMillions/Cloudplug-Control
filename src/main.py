@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication, QErrorMessage
 
 # User defined imports
 from modules.core.window import Window
+from modules.network.sql_connection import SQLConnection
 
 
 def main():
@@ -20,18 +21,11 @@ def main():
     app = QApplication(sys.argv)
     main_window = Window()
 
-    if not main_window.db_connected:
-        print('Error when connecting to MySQL databse')
-        error_dialog = QErrorMessage()
-        error_dialog.showMessage("Failed to connect to SFP database.")
-        error_dialog.exec()
-        return -1
-
-    # Window() class has a sql connection to the databases
-    mydb = main_window.db_connector
+    # Test a SQL connection with the database
+    mydb = SQLConnection()
 
     # Populate table in GUI window with the SFP data
-    mycursor = mydb.cursor
+    mycursor = mydb.get_cursor()
 
     if mycursor is None:
         print('Error getting cursor from database')
@@ -49,6 +43,7 @@ def main():
         main_window.appendToDebugLog(f'Adding {sfp_data} to the SFP table')
         main_window.appendRowInSFPTable(sfp_data)
 
+    mydb.close()
 
     #for x in range(0x00, 0xFF + 1):
     #    sfp = SFP([x] * 256, [0] * 256)

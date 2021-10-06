@@ -6,13 +6,17 @@ import struct
 from PyQt5.QtCore import QByteArray, QObject, pyqtSignal
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
 
-from modules.network.message import Message, MessageCode
+from modules.network.message import Message, MessageCode, unpackRawBytes
 from modules.network.utility import *
 
 class MyTCPServer(QObject):
 
     client_connected_signal = pyqtSignal(object)
     client_disconnected_signal = pyqtSignal(str)
+
+    # Sends ONLY a number to the UI thread that
+    # can handle updating things
+    update_ui_signal = pyqtSignal(MessageCode)
 
     # Emit messages to the main windows log
     log_signal = pyqtSignal(object)
@@ -93,6 +97,8 @@ class MyTCPServer(QObject):
         Handler for when a client sends a message
         '''
         client_socket: QTcpSocket = self.sender()
+        client_ip = client_socket.peerAddress().toString()
+        client_port = client_socket.peerPort()
         raw_msg = client_socket.readAll()
         
         code, data = struct.unpack('!H254s', raw_msg)
@@ -103,8 +109,19 @@ class MyTCPServer(QObject):
 
         print(sent_cmd)
         
-        print(f'Client at {client_socket.peerAddress().toString()} sent a message: {sent_cmd}')
-        self.log_signal.emit(f'Client at {client_socket.peerAddress().toString()} sent a message: {sent_cmd}')
+        print(f'Client at {client_ip} sent a message: {sent_cmd}')
+        self.log_signal.emit(f'Client at {client_ip} sent a message: {sent_cmd}')
+
+        self.processClientMessage(client_ip, client_port, raw_msg)
+
+    def processClientMessage(self, ip: str, port: int, raw_bytes: bytes):
+        sent_cmd: Message = unpackRawBytes(raw_bytes)
+
+
+        if sent_cmd.code == MessageCode.CLONE_SFP_MEMORY_ERROR:
+            self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} said: {sent_cmd.data}')
+        elif sent_cmd.code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
+            self.update_ui_signal.emit(MessageCode.CLONE_SFP_MEMORY_SUCCESS)
 
     def handleClientStateChange(self, state):
 

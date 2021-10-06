@@ -110,11 +110,6 @@ class TcpServerThread(QThread):
     '''
     tcp_server = MyTCPServer()
 
-    client_connected_signal = pyqtSignal(object)
-    client_disconnected_signal = pyqtSignal(object)
-    
-    log_signal = pyqtSignal(object)
-
     ## Starts an infinite loop to handle TCP connections and message processing.
     # @param self The self object pointer
     def run(self):
