@@ -33,6 +33,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
     send_command_signal = QtCore.pyqtSignal(object)
 
+    kill_signal = QtCore.pyqtSignal(int)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
@@ -69,7 +71,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.send_command_signal.connect(self.tcp_server_thread.send_command_from_ui)
         self.tcp_server_thread.start()
 
-
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
         self.reprogramButton.clicked.connect(self._refreshSfpTable)
@@ -87,10 +88,8 @@ class Window(QMainWindow, Ui_MainWindow):
             selected_row_in_table, 0
         ).text())
 
-        # TODO: MOVE THIS OUT LATER
 
         mydb = SQLConnection()
-
         mycursor = mydb.get_cursor()
         mycursor.execute(f"SELECT * FROM sfp_info.page_a0 WHERE id={selected_sfp_id};")
 
@@ -106,7 +105,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
         sfp = SFP(page_a0, page_a2)
 
-        print(f'{page_a0}')
+        print(format(sfp.calculate_cc_base(), '02X'))
+        print(sfp.get_cc_base())
 
         # Create SFP object after reading from database
 
@@ -249,6 +249,18 @@ class Window(QMainWindow, Ui_MainWindow):
         db.close()
 
     # Utility functions
+
+    def closeEvent(self, event):
+        print("Closing the window")
+
+        self.discovery_thread.quit()
+        self.tcp_server_thread.quit()
+        
+        event.accept()
+        
+
+
+
     def appendToDebugLog(self, text: str):
         
         text_edit = self.logTab.findChild(QPlainTextEdit, 'plainTextEdit')

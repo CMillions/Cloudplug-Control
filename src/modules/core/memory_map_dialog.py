@@ -53,6 +53,14 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
 
         self.selected_memory_page = 0xA0
 
+        
+
+        # Whenever a section in the table is resized we also want
+        # to resize the rows (allows for text wrapping)
+        self.tableWidget_2.horizontalHeader().sectionResized.connect(self.tableWidget_2.resizeRowsToContents)
+        
+
+
     def initializeTableValues(self, sfp_to_show: SFP):
         
         self.associated_sfp = sfp_to_show
@@ -70,6 +78,11 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
             item_to_add.setFont(QFont('Ubuntu', 8))
 
             self.tableWidget.setItem(row, col, item_to_add)
+        
+        # Fill in the values on the characteristics page
+        self.generateCharacteristicsTable()
+
+        
 
     def changeTableDisplayMode(self, selection: str):
 
@@ -114,6 +127,33 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         self.selected_memory_page = int(selection, base=16)
         self.updateTable()
 
+
+    # Functions for Characteristics tab
+
+    def generateCharacteristicsTable(self):
+        '''
+        Fills in the characteristics of the SFP module associated
+        with the memory page being shown. The table fields come from
+        SFF 8472 Rev 12.4 and are typed exactly.
+        '''
+        data_to_add = self.associated_sfp.get_identifier()
+        self.tableWidget_2.item(0, 4).setText(str(data_to_add))
+
+        data_to_add = self.associated_sfp.get_ext_identifier()
+        self.tableWidget_2.item(1, 4).setText(str(data_to_add))
+
+        data_to_add = self.associated_sfp.get_connector_type()
+        self.tableWidget_2.item(2, 4).setText(str(data_to_add))
+
+        data_to_add = self.associated_sfp.get_transceiver_info()
+        self.tableWidget_2.item(3, 4).setText(repr(data_to_add))
+
+        data_to_add = self.associated_sfp.get_encoding()
+        self.tableWidget_2.item(4, 4).setText(str(data_to_add))
+
+
+        self.tableWidget_2.resizeColumnsToContents()
+        self.tableWidget_2.resizeRowsToContents()
 
             
         

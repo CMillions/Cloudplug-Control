@@ -32,7 +32,7 @@ class SQLConnection:
         db_name = os.getenv('DB_NAME')
         
         try:
-            print(f'{db_host = }\t{db_user = }\t{db_pass = }')
+            #print(f'{db_host = }\t{db_user = }\t{db_pass = }')
             self.connection = mysql.connector.connect(
                 host=db_host,
                 user=db_user,

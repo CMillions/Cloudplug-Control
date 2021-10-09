@@ -1112,7 +1112,7 @@ class SFP:
 
         value = (msb << 8) | (lsb & 0xFF)
 
-        print(self.get_diagnostic_monitoring_type())
+        # print(self.get_diagnostic_monitoring_type())
 
         if self._calibration_type == self.CalibrationType.INTERNAL:
             return float(value)
