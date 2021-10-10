@@ -60,8 +60,8 @@ class BroadcastThread(QThread):
 
         print(f'Broadcast IP: {broadcast_ip_str = }')
 
-        udp_socket = QUdpSocket()
-        udp_socket.bind(bind_addr, port)
+        self.udp_socket = QUdpSocket()
+        self.udp_socket.bind(bind_addr, port)
 
         discover_msg = Message(MessageCode.DISCOVER, 'DISCOVER')
         raw_bytes = discover_msg.to_network_message()
@@ -74,9 +74,9 @@ class BroadcastThread(QThread):
         while True:
             # Write discovery message
             # print('Trying to write discovery message')
-            udp_socket.writeDatagram(byte_array, broadcast_addr, port)
-            while udp_socket.hasPendingDatagrams():
-                msg_tuple = udp_socket.readDatagram(PACKET_SIZE)
+            self.udp_socket.writeDatagram(byte_array, broadcast_addr, port)
+            while self.udp_socket.hasPendingDatagrams():
+                msg_tuple = self.udp_socket.readDatagram(PACKET_SIZE)
 
                 # Unpack the tuple to obtain the
                 # message, sender IP address, and the port
@@ -102,6 +102,9 @@ class BroadcastThread(QThread):
 
             time.sleep(1)
 
+    def main_window_close_event_handler(self):
+        self.udp_socket.close()
+        self.quit()
 
 class TcpServerThread(QThread):
     '''
@@ -146,3 +149,7 @@ class TcpServerThread(QThread):
         print(f'Sending {msg} to {ip}')
 
         self.tcp_server.sendCommand(ip, msg.code, msg.data)
+
+    def main_window_close_event_handler(self):
+        self.tcp_server._close_all_connections()
+        self.quit()

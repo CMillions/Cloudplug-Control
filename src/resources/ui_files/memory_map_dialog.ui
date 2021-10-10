@@ -26,7 +26,7 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -532,6 +532,116 @@
            <string>10</string>
           </property>
          </row>
+         <row>
+          <property name="text">
+           <string>11</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>12</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>13</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>14</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>15</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>16</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>17</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>18</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>19</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>20</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>21</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>22</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>23</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>24</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>25</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>26</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>27</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>28</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>29</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>30</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>31</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>32</string>
+          </property>
+         </row>
          <column>
           <property name="text">
            <string>Page A0 Address</string>
@@ -800,6 +910,17 @@ cable attenuation in dB at 12.9 GHz</string>
            <string>1</string>
           </property>
          </item>
+         <item row="8" column="2">
+          <property name="text">
+           <string>Length (SMF) or Copper Cable Attenuation</string>
+          </property>
+         </item>
+         <item row="8" column="3">
+          <property name="text">
+           <string>Link length supported for single-mode fiber, units of 100 m, or copper 
+cable attenuation in dB at 25.78 GHz</string>
+          </property>
+         </item>
          <item row="8" column="4">
           <property name="text">
            <string/>
@@ -815,9 +936,463 @@ cable attenuation in dB at 12.9 GHz</string>
            <string>1</string>
           </property>
          </item>
+         <item row="9" column="2">
+          <property name="text">
+           <string>Length (50 um, OM2)</string>
+          </property>
+         </item>
+         <item row="9" column="3">
+          <property name="text">
+           <string>Link length supported for 50 um OM2 fiber, units of 10 m</string>
+          </property>
+         </item>
          <item row="9" column="4">
           <property name="text">
            <string/>
+          </property>
+         </item>
+         <item row="10" column="0">
+          <property name="text">
+           <string>17</string>
+          </property>
+         </item>
+         <item row="10" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="10" column="2">
+          <property name="text">
+           <string>Length (62.5um, OM1)</string>
+          </property>
+         </item>
+         <item row="10" column="3">
+          <property name="text">
+           <string>Link length supported for 62.5 um OM1 fiber, units of 10 m</string>
+          </property>
+         </item>
+         <item row="11" column="0">
+          <property name="text">
+           <string>18</string>
+          </property>
+         </item>
+         <item row="11" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="11" column="2">
+          <property name="text">
+           <string>Length (OM4 or copper cable)</string>
+          </property>
+         </item>
+         <item row="11" column="3">
+          <property name="text">
+           <string>Link length supported for 50um OM4 fiber, units of 10 m. 
+Alternatively, copper or direct attach cable, units of m</string>
+          </property>
+         </item>
+         <item row="12" column="0">
+          <property name="text">
+           <string>19</string>
+          </property>
+         </item>
+         <item row="12" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="12" column="2">
+          <property name="text">
+           <string>Length (OM3 or Cable length, additional</string>
+          </property>
+         </item>
+         <item row="12" column="3">
+          <property name="text">
+           <string>Link length supported for 50 um OM3 fiber, units of 10 m. 
+Alternatively, copper or direct attach cable multiplier and base value</string>
+          </property>
+         </item>
+         <item row="13" column="0">
+          <property name="text">
+           <string>20-35</string>
+          </property>
+         </item>
+         <item row="13" column="1">
+          <property name="text">
+           <string>16</string>
+          </property>
+         </item>
+         <item row="13" column="2">
+          <property name="text">
+           <string>Vendor name</string>
+          </property>
+         </item>
+         <item row="13" column="3">
+          <property name="text">
+           <string>SFP vendor name (ASCII)</string>
+          </property>
+         </item>
+         <item row="14" column="0">
+          <property name="text">
+           <string>36</string>
+          </property>
+         </item>
+         <item row="14" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="14" column="2">
+          <property name="text">
+           <string>Transceiver</string>
+          </property>
+         </item>
+         <item row="14" column="3">
+          <property name="text">
+           <string>Code for electronic or optical compatibility (see Table 5-3 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="15" column="0">
+          <property name="text">
+           <string>37-39</string>
+          </property>
+         </item>
+         <item row="15" column="1">
+          <property name="text">
+           <string>3</string>
+          </property>
+         </item>
+         <item row="15" column="2">
+          <property name="text">
+           <string>Vendor OUI</string>
+          </property>
+         </item>
+         <item row="15" column="3">
+          <property name="text">
+           <string>SFP vendor IEEE company ID</string>
+          </property>
+         </item>
+         <item row="16" column="0">
+          <property name="text">
+           <string>40-55</string>
+          </property>
+         </item>
+         <item row="16" column="1">
+          <property name="text">
+           <string>16</string>
+          </property>
+         </item>
+         <item row="16" column="2">
+          <property name="text">
+           <string>Vendor PN</string>
+          </property>
+         </item>
+         <item row="16" column="3">
+          <property name="text">
+           <string>Part number provided by SFP vendor (ASCII)</string>
+          </property>
+         </item>
+         <item row="17" column="0">
+          <property name="text">
+           <string>56-59</string>
+          </property>
+         </item>
+         <item row="17" column="1">
+          <property name="text">
+           <string>4</string>
+          </property>
+         </item>
+         <item row="17" column="2">
+          <property name="text">
+           <string>Vendor rev</string>
+          </property>
+         </item>
+         <item row="17" column="3">
+          <property name="text">
+           <string>Revision level for part number provided by vendor (ASCII)</string>
+          </property>
+         </item>
+         <item row="18" column="0">
+          <property name="text">
+           <string>60-61</string>
+          </property>
+         </item>
+         <item row="18" column="1">
+          <property name="text">
+           <string>2</string>
+          </property>
+         </item>
+         <item row="18" column="2">
+          <property name="text">
+           <string>Wavelength</string>
+          </property>
+         </item>
+         <item row="18" column="3">
+          <property name="text">
+           <string>Laser wavelength (Passive/Active Cable Specification Compliance)</string>
+          </property>
+         </item>
+         <item row="19" column="0">
+          <property name="text">
+           <string>62</string>
+          </property>
+         </item>
+         <item row="19" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="19" column="2">
+          <property name="text">
+           <string>Fibre Channel Speed 2</string>
+          </property>
+         </item>
+         <item row="19" column="3">
+          <property name="text">
+           <string>Transceiver's Fibre Channel speed capabilities</string>
+          </property>
+         </item>
+         <item row="20" column="0">
+          <property name="text">
+           <string>63</string>
+          </property>
+         </item>
+         <item row="20" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="20" column="2">
+          <property name="text">
+           <string>CC_BASE</string>
+          </property>
+         </item>
+         <item row="20" column="3">
+          <property name="text">
+           <string>Check code for Base ID fields (addresses 0 to 62)</string>
+          </property>
+         </item>
+         <item row="21" column="0">
+          <property name="text">
+           <string>64-65</string>
+          </property>
+         </item>
+         <item row="21" column="1">
+          <property name="text">
+           <string>2</string>
+          </property>
+         </item>
+         <item row="21" column="2">
+          <property name="text">
+           <string>Options</string>
+          </property>
+         </item>
+         <item row="21" column="3">
+          <property name="text">
+           <string>Indicates which optional transceiver signals are implemented (see Table 8-3 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="22" column="0">
+          <property name="text">
+           <string>66</string>
+          </property>
+         </item>
+         <item row="22" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="22" column="2">
+          <property name="text">
+           <string>Signaling Rate, max</string>
+          </property>
+         </item>
+         <item row="22" column="3">
+          <property name="text">
+           <string>Upper signaling rate margin, units of % (see details for rates &gt; 25.4 GBd)</string>
+          </property>
+         </item>
+         <item row="23" column="0">
+          <property name="text">
+           <string>67</string>
+          </property>
+         </item>
+         <item row="23" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="23" column="2">
+          <property name="text">
+           <string>Signaling Rate, min</string>
+          </property>
+         </item>
+         <item row="23" column="3">
+          <property name="text">
+           <string>Lower signaling rate margin, units of % (see details for rates &gt; 25.4 GBd)</string>
+          </property>
+         </item>
+         <item row="24" column="0">
+          <property name="text">
+           <string>68-83</string>
+          </property>
+         </item>
+         <item row="24" column="1">
+          <property name="text">
+           <string>16</string>
+          </property>
+         </item>
+         <item row="24" column="2">
+          <property name="text">
+           <string>Vendor SN</string>
+          </property>
+         </item>
+         <item row="24" column="3">
+          <property name="text">
+           <string>Serial number provided by vendor (ASCII)</string>
+          </property>
+         </item>
+         <item row="25" column="0">
+          <property name="text">
+           <string>84-91</string>
+          </property>
+         </item>
+         <item row="25" column="1">
+          <property name="text">
+           <string>8</string>
+          </property>
+         </item>
+         <item row="25" column="2">
+          <property name="text">
+           <string>Date code</string>
+          </property>
+         </item>
+         <item row="25" column="3">
+          <property name="text">
+           <string>Vendor's manufacturing date code (see Table 8-4 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="26" column="0">
+          <property name="text">
+           <string>92</string>
+          </property>
+         </item>
+         <item row="26" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="26" column="2">
+          <property name="text">
+           <string>Diagnostic Monitoring Type</string>
+          </property>
+         </item>
+         <item row="26" column="3">
+          <property name="text">
+           <string>Indicates which type of diagnostic monitoring is implemented (if any) in the transceiver (see Table 8-6 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="27" column="0">
+          <property name="text">
+           <string>93</string>
+          </property>
+         </item>
+         <item row="27" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="27" column="2">
+          <property name="text">
+           <string>Enhanced Options</string>
+          </property>
+         </item>
+         <item row="27" column="3">
+          <property name="text">
+           <string>Indicates which optional enhanced features are implemented 
+(if any) in the transceiver (see Table 8-6 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="28" column="0">
+          <property name="text">
+           <string>94</string>
+          </property>
+         </item>
+         <item row="28" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="28" column="2">
+          <property name="text">
+           <string>SFF-8472 Compliance</string>
+          </property>
+         </item>
+         <item row="28" column="3">
+          <property name="text">
+           <string>Indicates which revision of SFF-8472 the transceiver complies with. 
+(see Table 8-8 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="29" column="0">
+          <property name="text">
+           <string>95</string>
+          </property>
+         </item>
+         <item row="29" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="29" column="2">
+          <property name="text">
+           <string>CC_EXT</string>
+          </property>
+         </item>
+         <item row="29" column="3">
+          <property name="text">
+           <string>Check code for the Extended ID Fields (addresses 64 to 94)</string>
+          </property>
+         </item>
+         <item row="30" column="0">
+          <property name="text">
+           <string>96-127</string>
+          </property>
+         </item>
+         <item row="30" column="1">
+          <property name="text">
+           <string>32</string>
+          </property>
+         </item>
+         <item row="30" column="2">
+          <property name="text">
+           <string>Vendor Specific</string>
+          </property>
+         </item>
+         <item row="30" column="3">
+          <property name="text">
+           <string>Vendor Specific EEPROM</string>
+          </property>
+         </item>
+         <item row="31" column="0">
+          <property name="text">
+           <string>128-255</string>
+          </property>
+         </item>
+         <item row="31" column="1">
+          <property name="text">
+           <string>128</string>
+          </property>
+         </item>
+         <item row="31" column="2">
+          <property name="text">
+           <string>Reserved</string>
+          </property>
+         </item>
+         <item row="31" column="3">
+          <property name="text">
+           <string>Reserved (was assigned to SFF-8079)</string>
           </property>
          </item>
         </widget>

@@ -21,9 +21,6 @@ class MyTCPServer(QObject):
     # Emit messages to the main windows log
     log_signal = pyqtSignal(object)
 
-    # A list of all connected sockets
-    connected_socket_list: List[QTcpSocket]
-
     # A dictionary of connected sockets, with the ip string
     # as the key and the socket object as the value
     connected_socket_dict: defaultdict
@@ -31,7 +28,6 @@ class MyTCPServer(QObject):
     def __init__(self, parent=None):
         super(MyTCPServer, self).__init__(parent)
         self.server = None
-        self.connected_socket_list = []
         self.connected_socket_dict = defaultdict(None)
 
     def openSession(self):
@@ -87,11 +83,6 @@ class MyTCPServer(QObject):
 
         self.client_disconnected_signal.emit(client_ip)
 
-        # Remove the first instance of a client with this IP address
-        for sock in self.connected_socket_list:
-            if sock.peerAddress().toString() == client.peerAddress().toString():
-                self.connected_socket_list.remove(sock)
-
     def handleClientMessage(self):
         '''
         Handler for when a client sends a message
@@ -145,6 +136,13 @@ class MyTCPServer(QObject):
         
         qba = QByteArray(raw_command)
         destination_socket.write(qba)
+
+    def _close_all_connections(self):
+        
+        for key in self.connected_socket_dict:
+            if self.connected_socket_dict[key] is not None:
+                self.connected_socket_dict[key].close()
+
 
 
 

@@ -54,6 +54,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.appendToDebugLog('Starting device discovery thread')
         self.discovery_thread = BroadcastThread()
         self.discovery_thread.device_response.connect(self.handleUdpClientMessage)
+
+        self.kill_signal.connect(self.discovery_thread.main_window_close_event_handler)
+
         self.discovery_thread.start()
 
         self.appendToDebugLog('Starting TCP server thread')
@@ -69,6 +72,8 @@ class Window(QMainWindow, Ui_MainWindow):
         tcp_server.log_signal.connect(self.appendToDebugLog)
 
         self.send_command_signal.connect(self.tcp_server_thread.send_command_from_ui)
+        self.kill_signal.connect(self.tcp_server_thread.main_window_close_event_handler)
+
         self.tcp_server_thread.start()
 
     def connectSignalSlots(self):
@@ -253,9 +258,7 @@ class Window(QMainWindow, Ui_MainWindow):
     def closeEvent(self, event):
         print("Closing the window")
 
-        self.discovery_thread.quit()
-        self.tcp_server_thread.quit()
-        
+        self.kill_signal.emit(-1)
         event.accept()
         
 
