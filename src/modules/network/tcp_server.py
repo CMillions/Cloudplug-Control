@@ -2,6 +2,7 @@ import sys
 from typing import List
 from collections import defaultdict
 import struct, time
+import PyQt5
 
 from PyQt5.QtCore import QByteArray, QObject, pyqtSignal
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
@@ -12,7 +13,7 @@ from modules.network.utility import *
 class MyTCPServer(QObject):
 
     client_connected_signal = pyqtSignal(object)
-    client_disconnected_signal = pyqtSignal(str)
+    client_disconnected_signal = pyqtSignal(object)
 
     # Sends ONLY a number to the UI thread that
     # can handle updating things
@@ -21,24 +22,21 @@ class MyTCPServer(QObject):
     # Emit messages to the main windows log
     log_signal = pyqtSignal(object)
 
-    # A dictionary of connected sockets, with the ip string
-    # as the key and the socket object as the value
-    connected_socket_dict: defaultdict
-
     def __init__(self, parent=None):
         super(MyTCPServer, self).__init__(parent)
         self.server = None
-        self.connected_socket_dict = defaultdict(None)
         self.connected_dock_dict = {}
         self.connected_cloudplug_dict = {}
+
+        self.expected_clients = 0
+
+        
 
     def openSession(self):
                 
         self.server = QTcpServer()
         self.HOST = get_LAN_ip_address()
         self.PORT = 20100
-        
-        self.server.newConnection.connect(self.handleNewConnection)
 
         if not self.server.listen(QHostAddress(self.HOST), self.PORT):
             raise Exception(f"Server failed to listen on {self.HOST}:{self.PORT}")
@@ -46,17 +44,36 @@ class MyTCPServer(QObject):
         self.log_signal.emit(f'TCP Server listening on {self.HOST}:{self.PORT}')
 
     def initDockConnection(self, sender_ip):
-        self.connected_dock_dict[sender_ip] = ''
+        self.connected_dock_dict[sender_ip] = None
+
+        if self.server.hasPendingConnections():
+            print("Trying to handle new dock connection")
+            self.handleNewConnection()
+        else:
+            self.server.newConnection.connect(self.handleNewConnection)
+            self.expected_clients += 1
 
     def initCloudplugConnection(self, sender_ip):
-        self.connected_cloudplug_dict[sender_ip] = ''
+        self.connected_cloudplug_dict[sender_ip] = None
+
+        print(self.server.isListening())
+        print(f'{self.server.hasPendingConnections() = }')
+
+        if self.server.hasPendingConnections():
+            print("Trying to handle new cloudplug connection")
+            self.handleNewConnection()
+        else:
+            self.server.newConnection.connect(self.handleNewConnection)
+            self.expected_clients += 1
+
 
     def handleNewConnection(self):
         
         client_connection = self.server.nextPendingConnection()
-        print(f'{client_connection.peerAddress() = }')
         client_ip = client_connection.peerAddress().toString()
-        
+
+        print(f'{client_ip = }')
+
         if client_ip in self.connected_dock_dict:
             self.connected_dock_dict[client_ip] = client_connection
             self.client_connected_signal.emit((DeviceType.DOCKING_STATION, client_ip))
@@ -68,14 +85,19 @@ class MyTCPServer(QObject):
             return
 
         
+        if self.expected_clients > 0:
+            self.expected_clients -= 1
+
+        if self.expected_clients == 0:
+            self.server.newConnection.disconnect()
 
         #self.connected_socket_dict[client_ip] = client_connection
-        print(f'Incoming client connection from {client_ip}')
+        #print(f'Incoming client connection from {client_ip}')
         
         # Set up the disconnected signal
         client_connection.disconnected.connect(self.handleClientDisconnect)
         client_connection.readyRead.connect(self.handleClientMessage)
-        client_connection.stateChanged.connect(self.handleClientStateChange)
+        # client_connection.stateChanged.connect(self.handleClientStateChange) doesn't work...
 
         self.log_signal.emit(f'Client connected from {client_ip}')
 
@@ -90,24 +112,45 @@ class MyTCPServer(QObject):
         # Technically bad design, but we need to know
         # which client disconnected
         client: QTcpSocket = self.sender()
-
-        print(f'{client.peerAddress() = }')
+        
         client_ip = client.peerAddress().toString()
+        print(f'{client_ip = }')
 
-        self.log_signal.emit(f'Client at {client.peerAddress().toString()} disconnected')
-        print(f'Client disconnected: {client.peerAddress().toString() = }')
-        print(f'There were {client.bytesAvailable()} bytes waiting to be processed')
+        if client_ip == '':
+            print("Client ip was '', searching")
+            for key in self.connected_dock_dict:
+                connection: QTcpSocket = self.connected_dock_dict[key]
+                if connection is not None and connection.state() == QAbstractSocket.SocketState.UnconnectedState:
+                    client_ip = key
+                    print(f"Found DOCKING STATION with client ip: {client_ip}")
+                    break
+        
+        if client_ip == '':
+            for key in self.connected_cloudplug_dict:
+                connection: QTcpSocket = self.connected_cloudplug_dict[key]
+                if connection is not None and connection.state() == QAbstractSocket.SocketState.UnconnectedState:
+                    client_ip = key
+                    print(f"Found CLOUDPLUG with client ip: {client_ip}")
+                    break
 
-        if client_ip in self.connected_dock_dict:
+        if client_ip == '':
+            print("Failed to find client ip")
+            return
+            
+
+        self.log_signal.emit(f'Client at {client_ip} disconnected')
+        #print(f'Client disconnected: {client.peerAddress().toString() = }')
+        #print(f'There were {client.bytesAvailable()} bytes waiting to be processed')
+
+        if client_ip in self.connected_dock_dict.keys():
             self.connected_dock_dict.pop(client_ip)
             self.client_disconnected_signal.emit((DeviceType.DOCKING_STATION, client_ip))
         
-        if client_ip in self.connected_cloudplug_dict:
+        if client_ip in self.connected_cloudplug_dict.keys():
             self.connected_cloudplug_dict.pop(client_ip)
             self.client_disconnected_signal.emit((DeviceType.CLOUDPLUG, client_ip))
 
-        client.close()
-        self.connected_socket_dict[client_ip] = None
+        #client.close()
 
     def handleClientMessage(self):
         '''
@@ -134,28 +177,35 @@ class MyTCPServer(QObject):
     def processClientMessage(self, ip: str, port: int, raw_bytes: bytes):
         sent_cmd: Message = unpackRawBytes(raw_bytes)
 
-
         if sent_cmd.code == MessageCode.CLONE_SFP_MEMORY_ERROR:
             self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} said: {sent_cmd.data}')
         elif sent_cmd.code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
             self.update_ui_signal.emit(MessageCode.CLONE_SFP_MEMORY_SUCCESS)
 
-    def handleClientStateChange(self, state):
+    def sendCommandSignalHandler(self, ip_msg_tuple):
+        ip = ip_msg_tuple[0]
+        msg = ip_msg_tuple[1]
 
-        # Show that the connection has been made
-        if state == QAbstractSocket.ConnectedState:
-            self.log_signal.emit('Connection established')
+        print('network_threads::send_command_from_ui')
+        print(f'Sending {msg} to {ip}')
+
+        self.sendCommand(ip, msg.code, msg.data)
 
     def sendCommand(self, destination_ip: str, code: MessageCode, msg: str):
         '''
         This method sends a command to a destination IP address.
         '''
-        if not self.connected_socket_dict[destination_ip]:
+        destination_socket = None
+
+        if destination_ip in self.connected_dock_dict:
+            destination_socket: QTcpSocket = self.connected_dock_dict[destination_ip]
+        elif destination_ip in self.connected_cloudplug_dict:
+            destination_socket: QTcpSocket = self.connected_cloudplug_dict[destination_ip]
+        else:
             print("Trying to send command to unknown IP")
             self.log_signal.emit(f"ERROR: Tried to send data to {destination_ip} which is an unknown destination.")
             return
 
-        destination_socket: QTcpSocket = self.connected_socket_dict[destination_ip]
         
         command = Message(code, msg)
         raw_command = command.to_network_message()
@@ -165,12 +215,17 @@ class MyTCPServer(QObject):
 
     def _close_all_connections(self):
         
-        for key in self.connected_socket_dict:
-            if self.connected_socket_dict[key] is not None:
-                sock: QTcpSocket = self.connected_socket_dict[key]
+        for key in self.connected_dock_dict:
+            if self.connected_dock_dict[key] is not None:
+                sock: QTcpSocket = self.connected_dock_dict[key]
+                sock.disconnectFromHost()
+                sock.close()
+
+        for key in self.connected_cloudplug_dict:
+            if self.connected_cloudplug_dict[key] is not None:
+                sock: QTcpSocket = self.connected_cloudplug_dict[key]
 
                 sock.disconnectFromHost()
-                sock.waitForDisconnected()
                 sock.close()
 
 

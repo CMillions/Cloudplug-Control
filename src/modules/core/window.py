@@ -70,14 +70,13 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # It's a lot to type, so use a temp variable to access the tcp_server of the thread
         # to connect slots
-        tcp_server = self.tcp_server_thread.tcp_server
-        tcp_server.client_connected_signal.connect(self.tcpClientConnectHandler)
-        tcp_server.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
-        tcp_server.update_ui_signal.connect(self.updateUiSignalHandler)
-        tcp_server.log_signal.connect(self.appendToDebugLog)
+        self.tcp_server_thread.client_connected_signal.connect(self.tcpClientConnectHandler)
+        self.tcp_server_thread.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
+        self.tcp_server_thread.update_ui_signal.connect(self.updateUiSignalHandler)
+        self.tcp_server_thread.log_signal.connect(self.appendToDebugLog)
 
-        self.dock_discover_signal.connect(tcp_server.initDockConnection)
-        self.cloudplug_discover_signal.connect(tcp_server.initCloudplugConnection)
+        self.dock_discover_signal.connect(self.tcp_server_thread.initDockConnection)
+        self.cloudplug_discover_signal.connect(self.tcp_server_thread.initCloudplugConnection)
 
         self.send_command_signal.connect(self.tcp_server_thread.send_command_from_ui)
         self.kill_signal.connect(self.tcp_server_thread.main_window_close_event_handler)
@@ -192,9 +191,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
+            print(f"Emitting DOCK {sender_ip}")
             self.dock_discover_signal.emit(sender_ip)
         elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
+            print(f"Emitting CLOUDPLUG {sender_ip}")
             self.cloudplug_discover_signal.emit(sender_ip)
         else:
             self.appendToDebugLog(f"Unknown data from {sender_ip}:{sender_port}")
@@ -242,6 +243,8 @@ class Window(QMainWindow, Ui_MainWindow):
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
         
+        print(f"Trying to remove data from {data}")
+
         device_type = data[0]
         device_ip = data[1]
 

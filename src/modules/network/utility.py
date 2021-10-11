@@ -1,12 +1,18 @@
 ## @package utility
 # Provides simple network utility functions.
 
-from PyQt5.QtNetwork import QNetworkInterface, QAbstractSocket
+from dataclasses import dataclass
+from PyQt5.QtNetwork import QNetworkInterface, QAbstractSocket, QTcpSocket
 from enum import Enum
 
 class DeviceType(Enum):
     DOCKING_STATION = 0
     CLOUDPLUG = 1
+
+@dataclass
+class Device:
+    device_type: DeviceType
+    tcp_socket: QTcpSocket
 
 def get_LAN_ip_address() -> str:
     '''

@@ -115,8 +115,17 @@ class TcpServerThread(QThread):
     A thread that houses the TCP Server used to communicate with
     CloudPlugs and Docking Stations.
     '''
-    tcp_server = MyTCPServer()
 
+    client_connected_signal = pyqtSignal(object)
+    client_disconnected_signal = pyqtSignal(object)
+
+    # Sends ONLY a number to the UI thread that
+    # can handle updating things
+    update_ui_signal = pyqtSignal(MessageCode)
+
+    # Emit messages to the main windows log
+    log_signal = pyqtSignal(object)
+    
     ## Starts an infinite loop to handle TCP connections and message processing.
     # @param self The self object pointer
     def run(self):
@@ -128,7 +137,13 @@ class TcpServerThread(QThread):
         @returns nothing
         '''
 
-        
+        self.tcp_server = MyTCPServer()
+
+        self.tcp_server.client_connected_signal.connect(self.emitClientConnectedSignal)
+        self.tcp_server.client_disconnected_signal.connect(self.emitClientDisconnectedSignal)
+        self.tcp_server.update_ui_signal.connect(self.emitUpdateUiSignal)
+        self.tcp_server.log_signal.connect(self.emitLogSignal)
+
         self.tcp_server.openSession()
 
         # Qt documentation says this shouldn't be needed
@@ -147,12 +162,31 @@ class TcpServerThread(QThread):
         then calls the tcp_server::sendCommmand method
         '''
         ip = ip_msg_tuple[0]
-        msg= ip_msg_tuple[1]
+        msg = ip_msg_tuple[1]
 
         print('network_threads::send_command_from_ui')
         print(f'Sending {msg} to {ip}')
 
         self.tcp_server.sendCommand(ip, msg.code, msg.data)
+
+    def initDockConnection(self, ip: str):
+        self.tcp_server.initDockConnection(ip)
+
+    def initCloudplugConnection(self, ip: str):
+        self.tcp_server.initCloudplugConnection(ip)
+
+    def emitClientConnectedSignal(self, data: object):
+        self.client_connected_signal.emit(data)
+
+    def emitClientDisconnectedSignal(self, data: object):
+        self.client_disconnected_signal.emit(data)
+
+    def emitUpdateUiSignal(self, code: MessageCode):
+        self.update_ui_signal.emit(code)
+
+    def emitLogSignal(self, data: object):
+        self.log_signal.emit(data)
+
 
     def main_window_close_event_handler(self):
         self.tcp_server._close_all_connections()
