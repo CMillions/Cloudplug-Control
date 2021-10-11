@@ -27,6 +27,8 @@ from random import randint
 from typing import Tuple
 import time
 
+from modules.network.utility import DeviceType
+
 class Window(QMainWindow, Ui_MainWindow):
 
     db_connected: bool
@@ -34,6 +36,9 @@ class Window(QMainWindow, Ui_MainWindow):
     send_command_signal = QtCore.pyqtSignal(object)
 
     kill_signal = QtCore.pyqtSignal(int)
+
+    dock_discover_signal = QtCore.pyqtSignal(str)
+    cloudplug_discover_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -47,8 +52,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tableWidget.resizeColumnsToContents()
         
         # TODO: remove later, just testing the table
-        for i in range(3):
-            self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))
+        #for i in range(3):
+        #    self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))
 
 
         self.appendToDebugLog('Starting device discovery thread')
@@ -70,6 +75,9 @@ class Window(QMainWindow, Ui_MainWindow):
         tcp_server.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
         tcp_server.update_ui_signal.connect(self.updateUiSignalHandler)
         tcp_server.log_signal.connect(self.appendToDebugLog)
+
+        self.dock_discover_signal.connect(tcp_server.initDockConnection)
+        self.cloudplug_discover_signal.connect(tcp_server.initCloudplugConnection)
 
         self.send_command_signal.connect(self.tcp_server_thread.send_command_from_ui)
         self.kill_signal.connect(self.tcp_server_thread.main_window_close_event_handler)
@@ -184,10 +192,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
-            self.appendToDebugLog(f"Awaiting TCP connection from {sender_ip}...")
+            self.dock_discover_signal.emit(sender_ip)
         elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
             self.appendToDebugLog(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
-            self.appendToDebugLog(f"Awaiting TCP connection from {sender_ip}...")
+            self.cloudplug_discover_signal.emit(sender_ip)
         else:
             self.appendToDebugLog(f"Unknown data from {sender_ip}:{sender_port}")
 
@@ -219,18 +227,33 @@ class Window(QMainWindow, Ui_MainWindow):
             self.send_command_signal.emit(msg_tuple)
             
 
-    def tcpClientConnectHandler(self, data: str):
+    def tcpClientConnectHandler(self, data: object):
         self.appendToDebugLog(f"Successful TCP connection from {data}")
-        self.dockingStationList.addItem(QListWidgetItem(data))
+
+        device_type = data[0]
+        device_ip = data[1]
+
+        if device_type == DeviceType.DOCKING_STATION:
+            self.dockingStationList.addItem(QListWidgetItem(device_ip))
+        elif device_type == DeviceType.CLOUDPLUG:
+            self.listWidget.addItem(QListWidgetItem(device_ip))
 
     def tcpClientDisconnectHandler(self, data: str):
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
-        print(f'Trying to remove {data}')
+        
+        device_type = data[0]
+        device_ip = data[1]
 
-        for item in self.dockingStationList.findItems(data, QtCore.Qt.MatchExactly):
-            row_of_item = self.dockingStationList.row(item)
-            self.dockingStationList.takeItem(row_of_item) # removeListItem didn't work
+        if device_type == DeviceType.DOCKING_STATION:
+            for item in self.dockingStationList.findItems(device_ip, QtCore.Qt.MatchExactly):
+                row_of_item = self.dockingStationList.row(item)
+                self.dockingStationList.takeItem(row_of_item) # removeListItem didn't work
+        elif device_type == DeviceType.CLOUDPLUG:
+            for item in self.listWidget.findItems(device_ip, QtCore.Qt.MatchExactly):
+                row_of_item = self.listWidget.row(item)
+                self.listWidget.takeItem(row_of_item)
+
 
     def updateUiSignalHandler(self, code: MessageCode):
         

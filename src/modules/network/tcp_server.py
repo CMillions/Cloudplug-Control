@@ -1,7 +1,7 @@
 import sys
 from typing import List
 from collections import defaultdict
-import struct
+import struct, time
 
 from PyQt5.QtCore import QByteArray, QObject, pyqtSignal
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
@@ -29,6 +29,8 @@ class MyTCPServer(QObject):
         super(MyTCPServer, self).__init__(parent)
         self.server = None
         self.connected_socket_dict = defaultdict(None)
+        self.connected_dock_dict = {}
+        self.connected_cloudplug_dict = {}
 
     def openSession(self):
                 
@@ -43,14 +45,31 @@ class MyTCPServer(QObject):
         
         self.log_signal.emit(f'TCP Server listening on {self.HOST}:{self.PORT}')
 
+    def initDockConnection(self, sender_ip):
+        self.connected_dock_dict[sender_ip] = ''
+
+    def initCloudplugConnection(self, sender_ip):
+        self.connected_cloudplug_dict[sender_ip] = ''
+
     def handleNewConnection(self):
         
         client_connection = self.server.nextPendingConnection()
+        print(f'{client_connection.peerAddress() = }')
         client_ip = client_connection.peerAddress().toString()
+        
+        if client_ip in self.connected_dock_dict:
+            self.connected_dock_dict[client_ip] = client_connection
+            self.client_connected_signal.emit((DeviceType.DOCKING_STATION, client_ip))
+        elif client_ip in self.connected_cloudplug_dict:
+            self.connected_cloudplug_dict[client_ip] = client_connection
+            self.client_connected_signal.emit((DeviceType.CLOUDPLUG, client_ip))
+        else:
+            print(f"Unknown IP address: {client_ip}")
+            return
 
-        self.connected_socket_dict[client_ip] = client_connection
+        
 
-        #self.textBrowser.append(f'Incoming client connection from {client_connection.peerAddress().toString()}')
+        #self.connected_socket_dict[client_ip] = client_connection
         print(f'Incoming client connection from {client_ip}')
         
         # Set up the disconnected signal
@@ -58,7 +77,6 @@ class MyTCPServer(QObject):
         client_connection.readyRead.connect(self.handleClientMessage)
         client_connection.stateChanged.connect(self.handleClientStateChange)
 
-        self.client_connected_signal.emit(client_ip)
         self.log_signal.emit(f'Client connected from {client_ip}')
 
         # Add new client to the list of current connections
@@ -72,18 +90,24 @@ class MyTCPServer(QObject):
         # Technically bad design, but we need to know
         # which client disconnected
         client: QTcpSocket = self.sender()
-        print(client)
+
+        print(f'{client.peerAddress() = }')
         client_ip = client.peerAddress().toString()
 
         self.log_signal.emit(f'Client at {client.peerAddress().toString()} disconnected')
-        print(f'Client disconnected {client.peerAddress().toString()}')
+        print(f'Client disconnected: {client.peerAddress().toString() = }')
         print(f'There were {client.bytesAvailable()} bytes waiting to be processed')
+
+        if client_ip in self.connected_dock_dict:
+            self.connected_dock_dict.pop(client_ip)
+            self.client_disconnected_signal.emit((DeviceType.DOCKING_STATION, client_ip))
+        
+        if client_ip in self.connected_cloudplug_dict:
+            self.connected_cloudplug_dict.pop(client_ip)
+            self.client_disconnected_signal.emit((DeviceType.CLOUDPLUG, client_ip))
+
         client.close()
-
         self.connected_socket_dict[client_ip] = None
-
-        print(client_ip)
-        self.client_disconnected_signal.emit(client_ip)
 
     def handleClientMessage(self):
         '''
