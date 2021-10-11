@@ -50,19 +50,18 @@ class MyTCPServer(QObject):
             print("Trying to handle new dock connection")
             self.handleNewConnection()
         else:
+            print("No pending connection, setting up to handle new connection")
             self.server.newConnection.connect(self.handleNewConnection)
             self.expected_clients += 1
 
     def initCloudplugConnection(self, sender_ip):
         self.connected_cloudplug_dict[sender_ip] = None
 
-        print(self.server.isListening())
-        print(f'{self.server.hasPendingConnections() = }')
-
         if self.server.hasPendingConnections():
             print("Trying to handle new cloudplug connection")
             self.handleNewConnection()
         else:
+            print("No pending connection, setting up to handle new connection")
             self.server.newConnection.connect(self.handleNewConnection)
             self.expected_clients += 1
 
@@ -88,8 +87,10 @@ class MyTCPServer(QObject):
         if self.expected_clients > 0:
             self.expected_clients -= 1
 
-        if self.expected_clients == 0:
-            self.server.newConnection.disconnect()
+            if self.expected_clients == 0:
+                self.server.newConnection.disconnect(self.handleNewConnection)
+
+       
 
         #self.connected_socket_dict[client_ip] = client_connection
         #print(f'Incoming client connection from {client_ip}')
