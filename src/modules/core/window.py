@@ -52,12 +52,12 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
         self.appendToDebugLog('Starting device discovery thread')
-        self.discovery_thread = BroadcastThread()
-        self.discovery_thread.device_response.connect(self.handleUdpClientMessage)
+        discovery_thread = BroadcastThread()
+        discovery_thread.device_response.connect(self.handleUdpClientMessage)
 
-        self.kill_signal.connect(self.discovery_thread.main_window_close_event_handler)
+        self.kill_signal.connect(discovery_thread.main_window_close_event_handler)
 
-        self.discovery_thread.start()
+        discovery_thread.start()
 
         self.appendToDebugLog('Starting TCP server thread')
         self.tcp_server_thread = TcpServerThread()
@@ -226,6 +226,8 @@ class Window(QMainWindow, Ui_MainWindow):
     def tcpClientDisconnectHandler(self, data: str):
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
+        print(f'Trying to remove {data}')
+
         for item in self.dockingStationList.findItems(data, QtCore.Qt.MatchExactly):
             row_of_item = self.dockingStationList.row(item)
             self.dockingStationList.takeItem(row_of_item) # removeListItem didn't work

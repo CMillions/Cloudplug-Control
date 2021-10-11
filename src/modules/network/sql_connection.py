@@ -38,7 +38,7 @@ class SQLConnection:
                 user=db_user,
                 password=db_pass,
                 database=db_name,
-                connection_timeout=30
+                connection_timeout=15
             )
 
             self.cursor = self.connection.cursor()
@@ -48,7 +48,7 @@ class SQLConnection:
             print(ex)
             self.connection = None
             self.cursor = None
-            return
+            raise Exception(ex)
 
     def get_cursor(self):
         return self.connection.cursor()

@@ -72,6 +72,7 @@ class MyTCPServer(QObject):
         # Technically bad design, but we need to know
         # which client disconnected
         client: QTcpSocket = self.sender()
+        print(client)
         client_ip = client.peerAddress().toString()
 
         self.log_signal.emit(f'Client at {client.peerAddress().toString()} disconnected')
@@ -81,6 +82,7 @@ class MyTCPServer(QObject):
 
         self.connected_socket_dict[client_ip] = None
 
+        print(client_ip)
         self.client_disconnected_signal.emit(client_ip)
 
     def handleClientMessage(self):
@@ -141,7 +143,11 @@ class MyTCPServer(QObject):
         
         for key in self.connected_socket_dict:
             if self.connected_socket_dict[key] is not None:
-                self.connected_socket_dict[key].close()
+                sock: QTcpSocket = self.connected_socket_dict[key]
+
+                sock.disconnectFromHost()
+                sock.waitForDisconnected()
+                sock.close()
 
 
 

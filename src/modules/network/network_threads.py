@@ -50,6 +50,8 @@ class BroadcastThread(QThread):
         understand this message and can respond. On a message response, this
         thread emits a signal which is connected to the main thread.
         '''
+        self.running = True
+
         local_ip_str = get_LAN_ip_address()
         broadcast_ip_str = get_LAN_broadcast_address(local_ip_str)
 
@@ -60,8 +62,8 @@ class BroadcastThread(QThread):
 
         print(f'Broadcast IP: {broadcast_ip_str = }')
 
-        self.udp_socket = QUdpSocket()
-        self.udp_socket.bind(bind_addr, port)
+        udp_socket = QUdpSocket()
+        udp_socket.bind(bind_addr, port)
 
         discover_msg = Message(MessageCode.DISCOVER, 'DISCOVER')
         raw_bytes = discover_msg.to_network_message()
@@ -70,13 +72,13 @@ class BroadcastThread(QThread):
         byte_array.append(raw_bytes)
 
         PACKET_SIZE = len(raw_bytes)
-
-        while True:
+        
+        while self.running:
             # Write discovery message
             # print('Trying to write discovery message')
-            self.udp_socket.writeDatagram(byte_array, broadcast_addr, port)
-            while self.udp_socket.hasPendingDatagrams():
-                msg_tuple = self.udp_socket.readDatagram(PACKET_SIZE)
+            udp_socket.writeDatagram(byte_array, broadcast_addr, port)
+            while udp_socket.hasPendingDatagrams():
+                msg_tuple = udp_socket.readDatagram(PACKET_SIZE)
 
                 # Unpack the tuple to obtain the
                 # message, sender IP address, and the port
@@ -102,9 +104,11 @@ class BroadcastThread(QThread):
 
             time.sleep(1)
 
-    def main_window_close_event_handler(self):
-        self.udp_socket.close()
+        udp_socket.close()
         self.quit()
+
+    def main_window_close_event_handler(self):
+        self.running = False
 
 class TcpServerThread(QThread):
     '''
