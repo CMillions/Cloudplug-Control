@@ -67,7 +67,9 @@ class MyTCPServer(QObject):
 
 
     def handleNewConnection(self):
-        
+        '''
+        Handles a pending connection in the connection queue for the TCP Server.
+        '''
         client_connection = self.server.nextPendingConnection()
         client_ip = client_connection.peerAddress().toString()
 

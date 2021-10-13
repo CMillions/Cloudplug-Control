@@ -12,7 +12,7 @@ import PyQt5
 from PyQt5 import QtCore
 from PyQt5.QtNetwork import QHostAddress
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
-                            QListWidgetItem, QPlainTextEdit, QTableWidgetItem, QMainWindow, QMenu, \
+                            QListWidgetItem, QPlainTextEdit, QTableWidget, QTableWidgetItem, QMainWindow, QMenu, \
                             QDialog, QTextBrowser, QWidget
 
 from modules.core.window_autogen import Ui_MainWindow
@@ -50,7 +50,8 @@ class Window(QMainWindow, Ui_MainWindow):
         # Allow columns to adjust to their contents
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.tableWidget.resizeColumnsToContents()
-        
+        self.tableWidget.verticalHeader().setVisible(False)
+
         # TODO: remove later, just testing the table
         #for i in range(3):
         #    self.listWidget.addItem(QListWidgetItem(f'Temp CloudPlug {i}'))

@@ -5,7 +5,7 @@
 # Custom Dialog class to display memory map values in a
 # hex table.
 
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QHeaderView, \
+from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QHeaderView, QListWidget, \
                             QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
                             QDialog
 from PyQt5.QtCore import *
@@ -57,7 +57,10 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
 
         # Whenever a section in the table is resized we also want
         # to resize the rows (allows for text wrapping)
-        self.tableWidget_2.horizontalHeader().sectionResized.connect(self.tableWidget_2.resizeRowsToContents)
+        header = self.tableWidget_2.horizontalHeader()
+
+        #header.sectionResized.connect(self.tableWidget_2.resizeRowsToContents)
+        
         
 
 
@@ -136,6 +139,8 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         with the memory page being shown. The table fields come from
         SFF 8472 Rev 12.4 and are typed exactly.
         '''
+        self.tableWidget_2: QListWidget
+
         data_to_add = self.associated_sfp.get_identifier()
         self.tableWidget_2.item(0, 4).setText(str(data_to_add))
 
@@ -146,14 +151,48 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         self.tableWidget_2.item(2, 4).setText(str(data_to_add))
 
         data_to_add = self.associated_sfp.get_transceiver_info()
-        self.tableWidget_2.item(3, 4).setText(repr(data_to_add))
+        self.tableWidget_2.item(3, 4).setText(str(data_to_add))
 
         data_to_add = self.associated_sfp.get_encoding()
         self.tableWidget_2.item(4, 4).setText(str(data_to_add))
 
+        self.tableWidget_2.item(5, 4).setText(str(self.associated_sfp.get_signaling_rate_nominal()))
+        self.tableWidget_2.item(6, 4).setText(str(self.associated_sfp.get_rate_identifier()))
+        self.tableWidget_2.item(7, 4).setText(str(self.associated_sfp.get_smf_km_link_length()))
+        self.tableWidget_2.item(8, 4).setText(str(self.associated_sfp.get_smf_link_length()))
+        self.tableWidget_2.item(9, 4).setText(str(self.associated_sfp.get_om2_link_length()))
+        self.tableWidget_2.item(10, 4).setText(str(self.associated_sfp.get_om1_link_length()))
+        self.tableWidget_2.item(11, 4).setText(str(self.associated_sfp.get_om4_link_length()))
+        self.tableWidget_2.item(12, 4).setText(str(self.associated_sfp.get_om3_link_length()))
+        self.tableWidget_2.item(13, 4).setText(str(self.associated_sfp.get_vendor_name()))
+        self.tableWidget_2.item(14, 4).setText(str(self.associated_sfp.get_transceiver2()))
+        self.tableWidget_2.item(15, 4).setText(str(self.associated_sfp.get_vendor_oui()))
+        self.tableWidget_2.item(16, 4).setText(str(self.associated_sfp.get_vendor_part_number()))
+        self.tableWidget_2.item(17, 4).setText(str(self.associated_sfp.get_vendor_revision_level()))
+        self.tableWidget_2.item(18, 4).setText(str(self.associated_sfp.get_wavelength()))
+        self.tableWidget_2.item(19, 4).setText(str(self.associated_sfp.get_fibre_channel_speed2()))
+        self.tableWidget_2.item(20, 4).setText(str(self.associated_sfp.get_cc_base()))
+        self.tableWidget_2.item(21, 4).setText(str(self.associated_sfp.get_optional_tr_signals()))
+        self.tableWidget_2.item(22, 4).setText(str(self.associated_sfp.get_max_signaling_rate_margin()))
+        self.tableWidget_2.item(23, 4).setText(str(self.associated_sfp.get_min_signaling_rate_margin()))
+        self.tableWidget_2.item(24, 4).setText(str(self.associated_sfp.get_vendor_serial_number()))
+        self.tableWidget_2.item(25, 4).setText(str(self.associated_sfp.get_vendor_date_code()))
+        self.tableWidget_2.item(26, 4).setText(str(self.associated_sfp.get_diagnostic_monitoring_type()))
+        self.tableWidget_2.item(27, 4).setText(str(self.associated_sfp.get_enhanced_options()))
+        self.tableWidget_2.item(28, 4).setText(str(self.associated_sfp.get_sff_8472_compliance()))
+        self.tableWidget_2.item(29, 4).setText(str(self.associated_sfp.get_cc_ext()))
+        self.tableWidget_2.item(30, 4).setText(str(self.associated_sfp.get_vendor_eeprom()))
+        self.tableWidget_2.item(31, 4).setText(str(self.associated_sfp.get_reserved_fields()))
+        
 
-        self.tableWidget_2.resizeColumnsToContents()
+        self.tableWidget_2.setColumnWidth(0, 100)
+        self.tableWidget_2.setColumnWidth(1, 100)
+        self.tableWidget_2.setColumnWidth(2, 200)
+        self.tableWidget_2.setColumnWidth(3, 200)
+        self.tableWidget_2.setColumnWidth(4, 300)
+
         self.tableWidget_2.resizeRowsToContents()
+
 
             
         

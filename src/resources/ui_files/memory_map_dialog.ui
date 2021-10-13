@@ -719,7 +719,7 @@
          </item>
          <item row="0" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="1" column="0">
@@ -744,7 +744,7 @@
          </item>
          <item row="1" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="2" column="0">
@@ -769,7 +769,7 @@
          </item>
          <item row="2" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="3" column="0">
@@ -794,7 +794,7 @@
          </item>
          <item row="3" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="4" column="0">
@@ -820,7 +820,7 @@ Module Management Reference Code Tables) </string>
          </item>
          <item row="4" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="5" column="0">
@@ -846,7 +846,7 @@ Module Management Reference Code Tables) </string>
          </item>
          <item row="5" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="6" column="0">
@@ -871,7 +871,7 @@ Module Management Reference Code Tables) </string>
          </item>
          <item row="6" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="7" column="0">
@@ -897,7 +897,7 @@ cable attenuation in dB at 12.9 GHz</string>
          </item>
          <item row="7" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="8" column="0">
@@ -923,7 +923,7 @@ cable attenuation in dB at 25.78 GHz</string>
          </item>
          <item row="8" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="9" column="0">
@@ -948,7 +948,7 @@ cable attenuation in dB at 25.78 GHz</string>
          </item>
          <item row="9" column="4">
           <property name="text">
-           <string/>
+           <string> </string>
           </property>
          </item>
          <item row="10" column="0">
@@ -969,6 +969,11 @@ cable attenuation in dB at 25.78 GHz</string>
          <item row="10" column="3">
           <property name="text">
            <string>Link length supported for 62.5 um OM1 fiber, units of 10 m</string>
+          </property>
+         </item>
+         <item row="10" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="11" column="0">
@@ -992,6 +997,11 @@ cable attenuation in dB at 25.78 GHz</string>
 Alternatively, copper or direct attach cable, units of m</string>
           </property>
          </item>
+         <item row="11" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="12" column="0">
           <property name="text">
            <string>19</string>
@@ -1011,6 +1021,11 @@ Alternatively, copper or direct attach cable, units of m</string>
           <property name="text">
            <string>Link length supported for 50 um OM3 fiber, units of 10 m. 
 Alternatively, copper or direct attach cable multiplier and base value</string>
+          </property>
+         </item>
+         <item row="12" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="13" column="0">
@@ -1033,6 +1048,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>SFP vendor name (ASCII)</string>
           </property>
          </item>
+         <item row="13" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="14" column="0">
           <property name="text">
            <string>36</string>
@@ -1051,6 +1071,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="14" column="3">
           <property name="text">
            <string>Code for electronic or optical compatibility (see Table 5-3 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="14" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="15" column="0">
@@ -1073,6 +1098,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>SFP vendor IEEE company ID</string>
           </property>
          </item>
+         <item row="15" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="16" column="0">
           <property name="text">
            <string>40-55</string>
@@ -1091,6 +1121,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="16" column="3">
           <property name="text">
            <string>Part number provided by SFP vendor (ASCII)</string>
+          </property>
+         </item>
+         <item row="16" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="17" column="0">
@@ -1113,6 +1148,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Revision level for part number provided by vendor (ASCII)</string>
           </property>
          </item>
+         <item row="17" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="18" column="0">
           <property name="text">
            <string>60-61</string>
@@ -1131,6 +1171,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="18" column="3">
           <property name="text">
            <string>Laser wavelength (Passive/Active Cable Specification Compliance)</string>
+          </property>
+         </item>
+         <item row="18" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="19" column="0">
@@ -1153,6 +1198,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Transceiver's Fibre Channel speed capabilities</string>
           </property>
          </item>
+         <item row="19" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="20" column="0">
           <property name="text">
            <string>63</string>
@@ -1171,6 +1221,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="20" column="3">
           <property name="text">
            <string>Check code for Base ID fields (addresses 0 to 62)</string>
+          </property>
+         </item>
+         <item row="20" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="21" column="0">
@@ -1193,6 +1248,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Indicates which optional transceiver signals are implemented (see Table 8-3 of SFF-8472)</string>
           </property>
          </item>
+         <item row="21" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="22" column="0">
           <property name="text">
            <string>66</string>
@@ -1211,6 +1271,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="22" column="3">
           <property name="text">
            <string>Upper signaling rate margin, units of % (see details for rates &gt; 25.4 GBd)</string>
+          </property>
+         </item>
+         <item row="22" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="23" column="0">
@@ -1233,6 +1298,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Lower signaling rate margin, units of % (see details for rates &gt; 25.4 GBd)</string>
           </property>
          </item>
+         <item row="23" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="24" column="0">
           <property name="text">
            <string>68-83</string>
@@ -1251,6 +1321,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="24" column="3">
           <property name="text">
            <string>Serial number provided by vendor (ASCII)</string>
+          </property>
+         </item>
+         <item row="24" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="25" column="0">
@@ -1273,6 +1348,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Vendor's manufacturing date code (see Table 8-4 of SFF-8472)</string>
           </property>
          </item>
+         <item row="25" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="26" column="0">
           <property name="text">
            <string>92</string>
@@ -1291,6 +1371,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="26" column="3">
           <property name="text">
            <string>Indicates which type of diagnostic monitoring is implemented (if any) in the transceiver (see Table 8-6 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="26" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="27" column="0">
@@ -1314,6 +1399,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
 (if any) in the transceiver (see Table 8-6 of SFF-8472)</string>
           </property>
          </item>
+         <item row="27" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="28" column="0">
           <property name="text">
            <string>94</string>
@@ -1333,6 +1423,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
           <property name="text">
            <string>Indicates which revision of SFF-8472 the transceiver complies with. 
 (see Table 8-8 of SFF-8472)</string>
+          </property>
+         </item>
+         <item row="28" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
          <item row="29" column="0">
@@ -1355,6 +1450,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Check code for the Extended ID Fields (addresses 64 to 94)</string>
           </property>
          </item>
+         <item row="29" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="30" column="0">
           <property name="text">
            <string>96-127</string>
@@ -1375,6 +1475,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
            <string>Vendor Specific EEPROM</string>
           </property>
          </item>
+         <item row="30" column="4">
+          <property name="text">
+           <string> </string>
+          </property>
+         </item>
          <item row="31" column="0">
           <property name="text">
            <string>128-255</string>
@@ -1393,6 +1498,11 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          <item row="31" column="3">
           <property name="text">
            <string>Reserved (was assigned to SFF-8079)</string>
+          </property>
+         </item>
+         <item row="31" column="4">
+          <property name="text">
+           <string> </string>
           </property>
          </item>
         </widget>

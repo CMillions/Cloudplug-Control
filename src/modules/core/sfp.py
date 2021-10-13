@@ -378,6 +378,13 @@ class SFP:
         elif code == 0x20:
             return 'Rate select based on PMDs as defined by 0xA0, byte 36 and 0xA2, byte 67'
 
+    def get_smf_km_link_length(self) -> int:
+        '''
+        Link length supported for single-mode fiber, units of
+        km, or copper cable attenuation in dB at 12.9 GHz
+        '''
+        return self.page_a0[14]
+
     def get_smf_link_length(self) -> int:
         '''
         Link length supported for single-mode fiber, units of
@@ -662,7 +669,10 @@ class SFP:
         '''
         Gets the serial number provided by the vendor (ASCII)
         '''
-        return f'{self.page_a0[68:83 + 1]}'
+        serial_number = ""
+        for val in self.page_a0[68:83 + 1]:
+            serial_number += chr(val)
+        return serial_number
 
     def get_vendor_date_code(self) -> str:
         '''
