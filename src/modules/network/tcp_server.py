@@ -7,7 +7,7 @@ import PyQt5
 from PyQt5.QtCore import QByteArray, QObject, pyqtSignal
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
 
-from modules.network.message import Message, MessageCode, unpackRawBytes
+from modules.network.message import MeasurementMessage, Message, MessageCode, unpackRawBytes, unpackMeasurementMessageBytes
 from modules.network.utility import *
 
 class MyTCPServer(QObject):
@@ -54,6 +54,13 @@ class MyTCPServer(QObject):
             self.server.newConnection.connect(self.handleNewConnection)
             self.expected_clients += 1
 
+            attempts = 10
+
+            while attempts > 0:
+                self.handleNewConnection()
+                time.sleep(1)
+                attempts -= 1
+
     def initCloudplugConnection(self, sender_ip):
         self.connected_cloudplug_dict[sender_ip] = None
 
@@ -64,6 +71,13 @@ class MyTCPServer(QObject):
             print("No pending connection, setting up to handle new connection")
             self.server.newConnection.connect(self.handleNewConnection)
             self.expected_clients += 1
+
+            attempts = 10
+
+            while attempts > 0:
+                self.handleNewConnection()
+                time.sleep(1)
+                attempts -= 1
 
 
     def handleNewConnection(self):
@@ -165,10 +179,15 @@ class MyTCPServer(QObject):
         raw_msg = client_socket.readAll()
         
         code, data = struct.unpack('!H254s', raw_msg)
-        # Stripping \x00 may not be the best idea:
-        # If the DATA part of the message must contain
-        # zeros they would be removed...
-        sent_cmd = Message(code, str(data, 'utf-8').strip('\x00'))
+        sent_cmd = None
+
+        if MessageCode(code) == MessageCode.REQUEST_SFP_PARAMETERS_ACK:
+            sent_cmd = unpackMeasurementMessageBytes(raw_msg)
+        else:
+            # Stripping \x00 may not be the best idea:
+            # If the DATA part of the message must contain
+            # zeros they would be removed...
+            sent_cmd = Message(code, str(data, 'utf-8').strip('\x00'))
 
         print(sent_cmd)
         

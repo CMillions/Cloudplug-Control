@@ -206,6 +206,13 @@
           </property>
          </widget>
         </item>
+        <item row="3" column="0">
+         <widget class="QPushButton" name="monitorSfpButton">
+          <property name="text">
+           <string>Monitor SFP Parameters</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="logTab">

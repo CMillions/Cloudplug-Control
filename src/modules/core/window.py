@@ -86,11 +86,13 @@ class Window(QMainWindow, Ui_MainWindow):
 
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
-        self.reprogramButton.clicked.connect(self._refreshSfpTable)
+        self.reprogramButton.clicked.connect(self._test_func)
 
         self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
 
         self.readSfpMemoryButton.clicked.connect(self.clone_sfp_memory_button_handler)
+
+        self.monitorSfpButton.clicked.connect(self._test_func)
 
     def display_sfp_memory_map(self, clicked_model_index):
 
@@ -291,6 +293,27 @@ class Window(QMainWindow, Ui_MainWindow):
         event.accept()
         
 
+    def _test_func(self):
+        selected_item_in_dock_tab = self.dockingStationList.selectedItems()
+
+        for ip in selected_item_in_dock_tab:
+            
+            # The IP address is what's stored in the list
+            ip = ip.text()
+
+            code = MessageCode.REQUEST_SFP_PARAMETERS
+            # The text of the message doesn't matter for this message
+            msg = 'Read parameters'
+
+            # The server needs to know the IP address of the client
+            # and what to send to it. The only way to emit this as a
+            # signal is to make it into a tuple
+            msg_tuple = (ip, Message(code, msg))
+
+            # Emits the signal with the data as the msg_tuple
+            # This signal is caught by the TcpServer thread
+            self.send_command_signal.emit(msg_tuple)
+        
 
 
     def appendToDebugLog(self, text: str):
