@@ -194,5 +194,8 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         self.tableWidget_2.resizeRowsToContents()
 
 
+    def closeEvent(self, event):
+        self.deleteLater()
+        event.accept()
             
         

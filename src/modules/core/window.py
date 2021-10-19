@@ -11,9 +11,10 @@ import PyQt5
 
 from PyQt5 import QtCore
 from PyQt5.QtNetwork import QHostAddress
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, \
+from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QListWidget, \
                             QListWidgetItem, QPlainTextEdit, QTableWidget, QTableWidgetItem, QMainWindow, QMenu, \
                             QDialog, QTextBrowser, QWidget
+from modules.core.monitor_dialog import MonitorDialog
 
 from modules.core.window_autogen import Ui_MainWindow
 from modules.core.memory_map_dialog import MemoryMapDialog
@@ -39,6 +40,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
     dock_discover_signal = QtCore.pyqtSignal(str)
     cloudplug_discover_signal = QtCore.pyqtSignal(str)
+
+    dockingStationList: QListWidget
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -84,6 +87,10 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.tcp_server_thread.start()
 
+
+        self.diagnostic_monitor_dialog = MonitorDialog(self)
+        self.diagnostic_monitor_dialog.timed_command.connect(self.appendToDebugLog)
+
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
         self.reprogramButton.clicked.connect(self._test_func)
@@ -92,7 +99,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.readSfpMemoryButton.clicked.connect(self.clone_sfp_memory_button_handler)
 
-        self.monitorSfpButton.clicked.connect(self._test_func)
+        self.monitorSfpButton.clicked.connect(self.display_monitor_dialog)
 
     def display_sfp_memory_map(self, clicked_model_index):
 
@@ -314,7 +321,22 @@ class Window(QMainWindow, Ui_MainWindow):
             # This signal is caught by the TcpServer thread
             self.send_command_signal.emit(msg_tuple)
         
+    def display_monitor_dialog(self):
 
+        selected_items = self.dockingStationList.selectedItems()
+
+        if len(selected_items) != 1:
+            temp = QErrorMessage()
+            if len(selected_items) > 1:
+                temp.showMessage("You can only choose 1 Docking Station!")
+            else:
+                temp.showMessage("No Docking Stations are available!")
+
+            temp.exec()
+            temp.deleteLater()
+        else:
+            self.diagnostic_monitor_dialog.startTimer()
+            self.diagnostic_monitor_dialog.show()
 
     def appendToDebugLog(self, text: str):
         
