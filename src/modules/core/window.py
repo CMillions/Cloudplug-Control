@@ -7,29 +7,25 @@
 # @section mod_history Modification History
 # - Modified on 10/19/2021 by Connor DeCamp
 ##
-from struct import unpack
-import PyQt5
 
 from PyQt5 import QtCore
 from PyQt5.QtNetwork import QHostAddress
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QListWidget, \
-                            QListWidgetItem, QPlainTextEdit, QTableWidget, QTableWidgetItem, QMainWindow, QMenu, \
-                            QDialog, QTextBrowser, QWidget
-from modules.core.monitor_dialog import MonitorDialog
+                            QListWidgetItem, QPlainTextEdit, QTableWidgetItem, QMainWindow
 
+                            
+from modules.core.monitor_dialog import MonitorDialog
 from modules.core.window_autogen import Ui_MainWindow
 from modules.core.memory_map_dialog import MemoryMapDialog
-from modules.core.sfp import SFP
-
-from modules.network.message import MessageCode, Message, unpackRawBytes
+from modules.network.message import MeasurementMessage, MessageCode, Message, ReadRegisterMessage, unpackRawBytes
 from modules.network.network_threads import BroadcastThread, TcpServerThread
 from modules.network.sql_connection import SQLConnection
+from modules.network.utility import DeviceType
+from modules.core.sfp import SFP
 
-from random import randint
 from typing import Tuple
 import time
 
-from modules.network.utility import DeviceType
 
 class Window(QMainWindow, Ui_MainWindow):
 
@@ -79,6 +75,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_server_thread.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
         self.tcp_server_thread.update_ui_signal.connect(self.updateUiSignalHandler)
         self.tcp_server_thread.log_signal.connect(self.appendToDebugLog)
+        self.tcp_server_thread.diagnostic_init_a0_signal.connect(self.handle_init_diagnostic_a0)
+        self.tcp_server_thread.diagnostic_init_a2_signal.connect(self.handle_init_diagnostic_a2)
+        self.tcp_server_thread.real_time_refresh_signal.connect(self.handle_real_time_refresh)
+        self.tcp_server_thread.remote_io_error_signal.connect(self.handle_remote_io_error)
 
         self.dock_discover_signal.connect(self.tcp_server_thread.initDockConnection)
         self.cloudplug_discover_signal.connect(self.tcp_server_thread.initCloudplugConnection)
@@ -90,11 +90,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
         self.diagnostic_monitor_dialog = MonitorDialog(self)
-        self.diagnostic_monitor_dialog.timed_command.connect(self.appendToDebugLog)
+        self.diagnostic_monitor_dialog.timed_command.connect(self.handle_diagnostic_timer_timeout)
 
     def connectSignalSlots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
-        self.reprogramButton.clicked.connect(self._test_func)
+        self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
 
         self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
 
@@ -299,47 +299,122 @@ class Window(QMainWindow, Ui_MainWindow):
 
         self.kill_signal.emit(-1)
         event.accept()
-        
-
-    def _test_func(self):
-        selected_item_in_dock_tab = self.dockingStationList.selectedItems()
-
-        for ip in selected_item_in_dock_tab:
-            
-            # The IP address is what's stored in the list
-            ip = ip.text()
-
-            code = MessageCode.REQUEST_SFP_PARAMETERS
-            # The text of the message doesn't matter for this message
-            msg = 'Read parameters'
-
-            # The server needs to know the IP address of the client
-            # and what to send to it. The only way to emit this as a
-            # signal is to make it into a tuple
-            msg_tuple = (ip, Message(code, msg))
-
-            # Emits the signal with the data as the msg_tuple
-            # This signal is caught by the TcpServer thread
-            self.send_command_signal.emit(msg_tuple)
+    
         
     def display_monitor_dialog(self):
+        '''! Function to display the diagnostic monitoring dialog.
 
+            @brief If the user has selected a connected Docking Station,
+            it opens a diagnostic monitoring dialog that allows the user
+            to see the diagnostics of the SFP module.
+        '''
         selected_items = self.dockingStationList.selectedItems()
 
-        self.diagnostic_monitor_dialog.show()
-
         if len(selected_items) != 1:
-            temp = QErrorMessage()
+            error_msg = QErrorMessage()
             if len(selected_items) > 1:
-                temp.showMessage("You can only choose 1 Docking Station!")
+                error_msg.showMessage("You can only choose 1 Docking Station!")
             else:
-                temp.showMessage("No Docking Stations are available!")
+                error_msg.showMessage("No Docking Stations are available!")
 
-            temp.exec()
-            temp.deleteLater()
+            error_msg.exec()
+            error_msg.deleteLater()
         else:
+            selected_item = selected_items[0]
+            # We need to read a lot of values from the SFP before
+            # we start doing diagnostic monitoring
+            # Initially, we need to read:
+            #   - Vendor name (16 bytes)
+            #   - Part number (16 bytes)
+            #   - Diagnostic Monitoring Type (1 byte)
+            #   - ALL of the alarm and warning thresholds (40 or 56 bytes)
+
+            # So we are expecting at least 73 and at most
+            # 89 bytes back from the docking station
+
+            dock_ip = selected_item.text()
+            self.diagnostic_monitor_dialog.dock_ip = dock_ip
+
+            page_a0_registers = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+                                 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                 92]
+            msg = ReadRegisterMessage(MessageCode.DIAGNOSTIC_INIT_A0, "", 0x50, page_a0_registers)
+            self.send_command_signal.emit((dock_ip, msg))
+
+            page_a2_registers = [i for i in range(91 + 1)]
+            page_a2_registers += [i for i in range(96, 109 + 1)]
+            msg = ReadRegisterMessage(MessageCode.DIAGNOSTIC_INIT_A2, "", 0x51, page_a2_registers)
+            self.send_command_signal.emit((dock_ip, msg))
+
             self.diagnostic_monitor_dialog.startTimer()
             self.diagnostic_monitor_dialog.show()
+
+    def handle_init_diagnostic_a0(self, cmd: ReadRegisterMessage):
+        sfp_ptr = self.diagnostic_monitor_dialog.associated_sfp
+
+        i = 0
+        for val in cmd.register_numbers[0:16]:
+            sfp_ptr.page_a0[20 + i] = val
+            i += 1
+
+        i = 0        
+        for val in cmd.register_numbers[16:32]:
+            sfp_ptr.page_a0[40 + i] = val
+            i += 1
+
+        diagnostic_int = cmd.register_numbers[len(cmd.register_numbers) - 1]
+        sfp_ptr.page_a0[92] = diagnostic_int
+        sfp_ptr.force_calibration_check()
+
+        calibration_str = ""
+        if sfp_ptr.calibration_type == SFP.CalibrationType.INTERNAL:
+            calibration_str = "Internally Calibrated"
+        elif sfp_ptr.calibration_type == SFP.CalibrationType.EXTERNAL:
+            calibration_str = "Externally Calibrated"
+
+        self.diagnostic_monitor_dialog.lineEdit.setText(sfp_ptr.get_vendor_name())
+        self.diagnostic_monitor_dialog.lineEdit_2.setText(sfp_ptr.get_vendor_part_number())
+        self.diagnostic_monitor_dialog.lineEdit_3.setText(calibration_str)
+        
+
+
+    def handle_init_diagnostic_a2(self, cmd: ReadRegisterMessage):
+        m = self.diagnostic_monitor_dialog
+        sfp_ptr = m.associated_sfp
+
+        for i in range(91 + 1):
+            sfp_ptr.page_a2[i] = cmd.register_numbers[i]
+
+        for i in range(96, 109 + 1):
+            sfp_ptr.page_a2[i] = cmd.register_numbers[i - 4]
+
+        self.diagnostic_monitor_dialog.update_alarm_warning_tab()
+        self.diagnostic_monitor_dialog.update_real_time_tab()
+
+    def handle_diagnostic_timer_timeout(self):
+        # Send a refresh real-time diagnostics message
+        code = MessageCode.REAL_TIME_REFRESH
+        page_num = 0x51
+        # All the register numbers for diagnostic information
+        registers = [96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109]
+
+        command = ReadRegisterMessage(code, "", page_num, registers)
+        self.send_command_signal.emit((self.diagnostic_monitor_dialog.dock_ip, command))
+
+    def handle_real_time_refresh(self, cmd: ReadRegisterMessage):
+
+        # Expecting data from registers [96, 109] in page 0x51 (aka 0xA2)
+        sfp_ptr = self.diagnostic_monitor_dialog.associated_sfp
+        sfp_ptr.force_calibration_check()
+
+        for i in range(96, 109 + 1):
+            sfp_ptr.page_a2[i] = cmd.register_numbers[i - 96]
+
+        self.diagnostic_monitor_dialog.update_real_time_tab()
+
+    def handle_remote_io_error(self, cmd: Message):
+        print("Trying to close diag window")
+        self.diagnostic_monitor_dialog.close()
 
     def appendToDebugLog(self, text: str):
         

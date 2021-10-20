@@ -52,7 +52,7 @@ def ieee754_to_int(b3: int, b2: int, b1: int, b0: int) -> int:
     
     return result
 
-def bytes_to_unsigned_decimal(b1: int, b0: int) -> int:
+def bytes_to_unsigned_decimal(b1: int, b0: int) -> Decimal:
     '''
     Takes in 2 bytes, formatted as b1.b0 and returns the
     unsigned decimal equivalent. For example:
@@ -74,6 +74,15 @@ def bytes_to_unsigned_decimal(b1: int, b0: int) -> int:
 
     return Decimal(str(integer + mantissa_int))
 
+def bytes_to_signed_twos_complement_decimal(b1: int, b0: int) -> Decimal:
+    
+    if (b1 & (1 << 7)) != 0:
+        b1 = ~(b1)
+        b0 = ~(b0) + 1
+        return -bytes_to_unsigned_decimal(b1 & 0xFF, b0 & 0xFF)
+    else:
+        return bytes_to_unsigned_decimal(b1 & 0xFF, b0 & 0xFF)
+
 def signed_twos_complement_to_int(b1: int, b0: int) -> int:
     '''
     Takes two bytes (b1, b0) and converts it from signed two's complement
@@ -86,5 +95,34 @@ def signed_twos_complement_to_int(b1: int, b0: int) -> int:
 
     if (val & (1 << (bits - 1))) != 0:
         val = val - (1 << bits)
+    
+    return val
+
+def bytes_to_tec_current(b1: int, b0: int) -> float:
+    '''
+    See SFF8472 for TEC current formats. It's a signed twos complement
+    floating point number, so we have to convert it. We also have to use
+    the correct bit weights.
+    '''
+
+    b1_weights = [1638.4, 819.2, 409.6, 204.8, 102.4, 51.2, 25.6]
+    b0_weights = [12.8, 6.4, 3.2, 1.6, 0.8, 0.4, 0.2, 0.1]
+
+    if b1 & (1 << 7):
+        b1 = ~(b1)
+        b0 = ~(b0) + 1
+
+    mask = 0xFF
+
+    val = 0
+
+    i = 0
+    while mask > 0:
+        if b1 & mask:
+            val += b1_weights[i]
+        if b0 & mask:
+            val += b0_weights[i]
+
+        mask = mask // 2
     
     return val

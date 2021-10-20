@@ -1,13 +1,10 @@
-import sys
-from typing import List
-from collections import defaultdict
+from typing import Union
 import struct, time
-import PyQt5
 
 from PyQt5.QtCore import QByteArray, QObject, pyqtSignal
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
 
-from modules.network.message import MeasurementMessage, Message, MessageCode, unpackRawBytes, unpackMeasurementMessageBytes
+from modules.network.message import *
 from modules.network.utility import *
 
 class MyTCPServer(QObject):
@@ -18,6 +15,12 @@ class MyTCPServer(QObject):
     # Sends ONLY a number to the UI thread that
     # can handle updating things
     update_ui_signal = pyqtSignal(MessageCode)
+
+    diagnostic_init_a0_signal = pyqtSignal(ReadRegisterMessage)
+    diagnostic_init_a2_signal = pyqtSignal(ReadRegisterMessage)
+    real_time_refresh_signal = pyqtSignal(ReadRegisterMessage)
+
+    remote_io_error_signal = pyqtSignal(Message)
 
     # Emit messages to the main windows log
     log_signal = pyqtSignal(object)
@@ -87,7 +90,7 @@ class MyTCPServer(QObject):
         client_connection = self.server.nextPendingConnection()
         client_ip = client_connection.peerAddress().toString()
 
-        print(f'{client_ip = }')
+        #print(f'{client_ip = }')
 
         if client_ip in self.connected_dock_dict:
             self.connected_dock_dict[client_ip] = client_connection
@@ -131,10 +134,10 @@ class MyTCPServer(QObject):
         client: QTcpSocket = self.sender()
         
         client_ip = client.peerAddress().toString()
-        print(f'{client_ip = }')
+        #print(f'{client_ip = }')
 
         if client_ip == '':
-            print("Client ip was '', searching")
+            print("Client ip was empty (''), searching")
             for key in self.connected_dock_dict:
                 connection: QTcpSocket = self.connected_dock_dict[key]
                 if connection is not None and connection.state() == QAbstractSocket.SocketState.UnconnectedState:
@@ -178,42 +181,51 @@ class MyTCPServer(QObject):
         client_port = client_socket.peerPort()
         raw_msg = client_socket.readAll()
         
-        code, data = struct.unpack('!H254s', raw_msg)
+        code, *garbage = struct.unpack(f'!H{MESSAGE_BYTES - SIZEOF_H}x', raw_msg)
         sent_cmd = None
 
-        if MessageCode(code) == MessageCode.REQUEST_SFP_PARAMETERS_ACK:
-            sent_cmd = unpackMeasurementMessageBytes(raw_msg)
-        else:
-            # Stripping \x00 may not be the best idea:
-            # If the DATA part of the message must contain
-            # zeros they would be removed...
-            sent_cmd = Message(code, str(data, 'utf-8').strip('\x00'))
+        read_register_acks = [MessageCode.DIAGNOSTIC_INIT_A0_ACK, MessageCode.DIAGNOSTIC_INIT_A2_ACK, MessageCode.REAL_TIME_REFRESH_ACK]
 
-        print(sent_cmd)
-        
-        print(f'Client at {client_ip} sent a message: {sent_cmd}')
+        if MessageCode(code) in read_register_acks:
+            sent_cmd = bytesToReadRegisterMessage(raw_msg)
+        else:
+            sent_cmd = unpackRawBytes(raw_msg)
+
+        #print(sent_cmd)
+        #print(f'Client at {client_ip} sent a message: {sent_cmd}')
         self.log_signal.emit(f'Client at {client_ip} sent a message: {sent_cmd}')
 
-        self.processClientMessage(client_ip, client_port, raw_msg)
+        self.processClientMessage(client_ip, client_port, sent_cmd)
 
-    def processClientMessage(self, ip: str, port: int, raw_bytes: bytes):
-        sent_cmd: Message = unpackRawBytes(raw_bytes)
+    def processClientMessage(self, ip: str, port: int, command: Union[Message, ReadRegisterMessage]):
 
-        if sent_cmd.code == MessageCode.CLONE_SFP_MEMORY_ERROR:
-            self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} said: {sent_cmd.data}')
-        elif sent_cmd.code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
+        if command.code == MessageCode.CLONE_SFP_MEMORY_ERROR:
+            self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} said: {command.data_str}')
+        elif command.code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
             self.update_ui_signal.emit(MessageCode.CLONE_SFP_MEMORY_SUCCESS)
+        elif command.code == MessageCode.DIAGNOSTIC_INIT_A0_ACK:
+            self.log_signal.emit(f'DOCKING STATION at {ip}:{port} successfully read vendor name, PN, diagnostic type')
+            self.diagnostic_init_a0_signal.emit(command)
+        elif command.code == MessageCode.DIAGNOSTIC_INIT_A2_ACK:
+            self.log_signal.emit(f'DOCKING STATION at {ip}:{port} successfully read diagnostic information')
+            self.diagnostic_init_a2_signal.emit(command)
+        elif command.code == MessageCode.REAL_TIME_REFRESH_ACK:
+            self.log_signal.emit(f'DOCKING STATION at {ip}:{port} successfully refreshed diagnostic info')
+            self.real_time_refresh_signal.emit(command)
+        elif command.code == MessageCode.I2C_ERROR:
+            self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} - said: {command.data_str}')
+            self.remote_io_error_signal.emit(command)
 
     def sendCommandSignalHandler(self, ip_msg_tuple):
         ip = ip_msg_tuple[0]
         msg = ip_msg_tuple[1]
 
-        print('network_threads::send_command_from_ui')
-        print(f'Sending {msg} to {ip}')
+        #print('network_threads::send_command_from_ui')
+        #print(f'Sending {msg} to {ip}')
 
-        self.sendCommand(ip, msg.code, msg.data)
+        self.sendCommand(ip, msg)
 
-    def sendCommand(self, destination_ip: str, code: MessageCode, msg: str):
+    def sendCommand(self, destination_ip: str, command: Union[Message, ReadRegisterMessage]):
         '''
         This method sends a command to a destination IP address.
         '''
@@ -228,8 +240,6 @@ class MyTCPServer(QObject):
             self.log_signal.emit(f"ERROR: Tried to send data to {destination_ip} which is an unknown destination.")
             return
 
-        
-        command = Message(code, msg)
         raw_command = command.to_network_message()
         
         qba = QByteArray(raw_command)

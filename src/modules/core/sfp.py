@@ -85,7 +85,7 @@ class SFP:
         elif INTERNAL_CALIBRATION_FLAG:
             self.calibration_type = self.CalibrationType.EXTERNAL
         else:
-            raise ValueError("Invalid SFP calibration type. Is the memory valid?")
+            print("WARNING: Invalid SFP calibration type. Is the memory valid?")
 
     def add_memory_page(self, page_code: int, page_values: List[int]) -> None:
         '''! Associates a hex value key with a list of integers that represent a memory page from SFP+ EEPROM.
@@ -744,11 +744,11 @@ class SFP:
 
         if code & 0x20:
             compliant_with.append("Internally calibrated")
-            self._calibration_type = self.CalibrationType.INTERNAL
+            self.calibration_type = self.CalibrationType.INTERNAL
 
         if code & 0x10:
             compliant_with.append("Externally calibrated")
-            self._calibration_type = self.CalibrationType.EXTERNAL
+            self.calibration_type = self.CalibrationType.EXTERNAL
         
         if code & 0x08:
             compliant_with.append("Received power measurement type: average power")
@@ -762,6 +762,13 @@ class SFP:
             compliant_with.append("Reserved")
 
         return compliant_with
+
+    def force_calibration_check(self):
+        if self.page_a0[92] & 0x20:
+            self.calibration_type = self.CalibrationType.INTERNAL
+
+        if self.page_a0[92] & 0x10:
+            self.calibration_type = self.CalibrationType.EXTERNAL
 
     def get_enhanced_options(self) -> str:
         '''
@@ -868,7 +875,7 @@ class SFP:
         Returns uncalibrated data from module located at 
         addresses [msb, lsb] in page 0xA2. See Table 9-5 from SFF 8472
         '''
-        return self.page_a2[msb_address] << 8 | self.page_a2[lsb_address]
+        return (self.page_a2[msb_address] << 8 | self.page_a2[lsb_address] & 0xFF)
 
     def get_temp_high_alarm(self) -> int:
         '''
@@ -878,17 +885,17 @@ class SFP:
 
         # MSB is at the lower address, so shift it left 8 bits
         # and OR it with the rest of the number
-        return self._calibration_helper(0, 1)
+        b1 = self.page_a2[0]
+        b0 = self.page_a2[1]
+        return bytes_to_signed_twos_complement_decimal(b1, b0)
 
     def get_temp_low_alarm(self) -> int:
         '''
         Gets the alarm threshold for module temperature
         being too low. This value is not calibrated.
         '''
-
-        # MSB is at the lower address, so shift it left 8 bits
-        # and OR it with the rest of the number
-        return self.page_a2[2] << 8 | self.page_a2[3]
+        print(f'{self.page_a2[2]}..{self.page_a2[3]}')
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[2], self.page_a2[3])
     
     def get_temp_high_warning(self) -> int:
         '''
@@ -896,7 +903,7 @@ class SFP:
         being too high. This value is not calibrated.
         '''
 
-        return self.page_a2[4] << 8 | self.page_a2[5]
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[4], self.page_a2[5])
 
     def get_temp_low_warning(self) -> int:
         '''
@@ -904,7 +911,7 @@ class SFP:
         being too low. This value is not calibrated.
         '''
 
-        return self.page_a2[6] << 8 | self.page_a2[7]
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[6], self.page_a2[7])
 
     def get_voltage_high_alarm(self) -> int:
         '''
@@ -1031,56 +1038,56 @@ class SFP:
         Gets the high alarm threshold for the optional laser
         temperature. Uncalibrated
         '''
-        return self._calibration_helper(40, 41)
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[40], self.page_a2[41])
 
     def get_optional_laser_temp_low_alarm(self) -> int:
         '''
         Gets the low alarm threshold for the optional laser
         temperature. Uncalibrated
         '''
-        return self._calibration_helper(42, 43)
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[42], self.page_a2[43])
     
     def get_optional_laser_temp_high_warning(self) -> int:
         '''
         Gets the high warning threshold for the optional laser
         temperature. Uncalibrated.
         '''
-        return self._calibration_helper(44, 45)
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[44], self.page_a2[45])
 
     def get_optional_laser_temp_low_warning(self) -> int:
         '''
         Gets the low warning threshold for the optional laser
-        temperature. Uncalibrated.
+        temperature.
         '''
-        return self._calibration_helper(46, 47)
+        return bytes_to_signed_twos_complement_decimal(self.page_a2[46], self.page_a2[47])
     
     def get_optional_tec_current_high_alarm(self) -> int:
         '''
         Gets the high alarm threshold for the optional TEC
-        current. Uncalibrated.
+        current.
         '''
-        return self._calibration_helper(48, 49)
+        return bytes_to_tec_current(self.page_a2[48], self.page_a2[49])
     
     def get_optional_tec_current_low_alarm(self) -> int:
         '''
         Gets the low alarm threshold for the optional TEC
-        current. Uncalibrated.
+        current.
         '''
-        return self._calibration_helper(50, 51)
+        return bytes_to_tec_current(self.page_a2[50], self.page_a2[51])
     
     def get_optional_tec_current_high_warning(self) -> int:
         '''
         Gets the high warning threshold for the optional TEC
         current. Uncalibrated.
         '''
-        return self._calibration_helper(52, 53)
+        return bytes_to_tec_current(self.page_a2[52], self.page_a2[53])
 
     def get_optional_tec_current_low_warning(self) -> int:
         '''
         Gets the low warning threshold for the optional TEC
         current. Uncalibrated.
         '''
-        return self._calibration_helper(54, 55)
+        return bytes_to_tec_current(self.page_a2[54], self.page_a2[55])
     
     #   Getters for External Calibration Constants
     #   RX Power uses IEEE 754 standard to represent
@@ -1143,7 +1150,7 @@ class SFP:
             self.page_a2[74], self.page_a2[75]
         )
 
-    def calculate_rx_power_uw(self) -> int:
+    def calculate_rx_power_uw(self) -> Decimal:
         '''! Calculates the receiver optical power in uW. 
         @brief Formula for external calibration is:
             Rx_PWR(4) * (read value) + 
@@ -1160,12 +1167,12 @@ class SFP:
 
         # print(self.get_diagnostic_monitoring_type())
 
-        if self._calibration_type == self.CalibrationType.INTERNAL:
-            return float(value)
-        elif self._calibration_type == self.CalibrationType.EXTERNAL:
-            return self._get_rx_pwr_4() * value + self._get_rx_pwr_3() * value + \
+        if self.calibration_type == self.CalibrationType.INTERNAL:
+            return Decimal(value)
+        elif self.calibration_type == self.CalibrationType.EXTERNAL:
+            return Decimal(self._get_rx_pwr_4() * value + self._get_rx_pwr_3() * value + \
                    self._get_rx_pwr_2() * value + self._get_rx_pwr_2() * value + \
-                   self._get_rx_pwr_1() * value + self._get_rx_pwr_0()
+                   self._get_rx_pwr_1() * value + self._get_rx_pwr_0())
         else:
             print("ERROR::SFP::calculate_rx_power() - Unknown calibration type")
             return -1
@@ -1249,7 +1256,7 @@ class SFP:
         '''
         return 0xFF & sum(self.page_a2[0:95])
 
-    def get_temperature(self) -> float:
+    def get_temperature(self) -> Decimal:
         '''
         Returns the module temperature. Calibrated
         16-bit data.
@@ -1258,11 +1265,14 @@ class SFP:
         msb = self.page_a2[96]
         lsb = self.page_a2[97]
 
-        converted_val = bytes_to_unsigned_decimal(msb, lsb)
+        converted_val = bytes_to_signed_twos_complement_decimal(msb, lsb)
 
-        return Decimal(self.get_temp_slope()) * Decimal(converted_val) + Decimal(self.get_temp_offset())
+        if self.calibration_type == self.CalibrationType.INTERNAL:
+            return Decimal(converted_val)
+        else:
+            return Decimal(self.get_temp_slope()) * Decimal(converted_val) + Decimal(self.get_temp_offset())
 
-    def get_vcc(self) -> float:
+    def get_vcc(self) -> Decimal:
         '''
         Returns the measured supply voltage in transceiver.
         '''
@@ -1272,32 +1282,60 @@ class SFP:
 
         return self._real_time_measurement_helper(98, 99, slope, offset)
 
-    def get_tx_bias_current(self) -> float:
+    def get_tx_bias_current(self) -> Decimal:
         
         slope = self.get_tx_i_slope()
         offset = self.get_tx_i_offset()
 
         return self._real_time_measurement_helper(100, 101, slope, offset)
 
-    def get_tx_power(self) -> float:
+    def get_tx_power(self) -> Decimal:
         slope = self.get_tx_pwr_slope()
         offset = self.get_tx_pwr_offset()
 
         return self._real_time_measurement_helper(102, 103, slope, offset)
 
-    def get_rx_power(self):
+    def get_rx_power(self) -> Decimal:
         msb = self.page_a2[104]
         lsb = self.page_a2[105]
 
         value = self._calibration_helper(msb, lsb)
 
-        if self._calibration_type == self.CalibrationType.INTERNAL:
-            return self.get_rx_pwr_0()
-        elif self._calibration_type == self.CalibrationType.EXTERNAL:
-            return self.get_rx_pwr_4() * value + self.get_rx_pwr_3() * value + \
+        if self.calibration_type == self.CalibrationType.INTERNAL:
+            return Decimal(self.get_rx_pwr_0())
+        elif self.calibration_type == self.CalibrationType.EXTERNAL:
+            return Decimal(self.get_rx_pwr_4() * value + self.get_rx_pwr_3() * value + \
                    self.get_rx_pwr_2() * value + self.get_rx_pwr_1() * value + \
-                   self.get_rx_pwr_0()
+                   self.get_rx_pwr_0())
         else:
             raise Exception("ERROR:SFP::get_rx_pwr() - Unknown calibration type")
+
+    def get_laser_temp_or_wavelength(self) -> float:
+        msb = self.page_a2[106]
+        lsb = self.page_a2[107]
+
+        converted_val = bytes_to_signed_twos_complement_decimal(msb, lsb)
+
+        if self.calibration_type == self.CalibrationType.INTERNAL:
+            return Decimal(converted_val)
+        else:
+            return Decimal(self.get_temp_slope()) * Decimal(converted_val) + Decimal(self.get_temp_offset())
+
+    def get_tec_current(self) -> float:
+        msb = self.page_a2[108]
+        lsb = self.page_a2[109]
+
+        return bytes_to_tec_current(msb, lsb)
+
+        
+
+    def _real_time_measurement_helper(self, b1: int, b0: int, slope: float, offset: float) -> float:
+        num = self._calibration_helper(b1, b0)
+
+        if self.calibration_type == self.CalibrationType.INTERNAL:
+            slope = 1.0
+            offset = 0.0
+
+        return Decimal(slope) * Decimal(num) + Decimal(offset)
 
 # END sfp.py

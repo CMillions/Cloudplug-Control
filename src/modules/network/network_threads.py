@@ -64,7 +64,7 @@ class BroadcastThread(QThread):
         bind_addr = QHostAddress(local_ip_str)
         broadcast_addr = QHostAddress(broadcast_ip_str)
 
-        print(f'Broadcast IP: {broadcast_ip_str = }')
+        #print(f'Broadcast IP: {broadcast_ip_str = }')
 
         udp_socket = QUdpSocket()
         udp_socket.bind(bind_addr, port)
@@ -129,7 +129,12 @@ class TcpServerThread(QThread):
 
     # Emit messages to the main windows log
     log_signal = pyqtSignal(object)
-    
+
+    diagnostic_init_a0_signal = pyqtSignal(object)
+    diagnostic_init_a2_signal = pyqtSignal(object)
+    real_time_refresh_signal = pyqtSignal(object)
+    remote_io_error_signal = pyqtSignal(object)
+
     ## Starts an infinite loop to handle TCP connections and message processing.
     # @param self The self object pointer
     def run(self):
@@ -147,6 +152,11 @@ class TcpServerThread(QThread):
         self.tcp_server.client_disconnected_signal.connect(self.emitClientDisconnectedSignal)
         self.tcp_server.update_ui_signal.connect(self.emitUpdateUiSignal)
         self.tcp_server.log_signal.connect(self.emitLogSignal)
+
+        self.tcp_server.diagnostic_init_a0_signal.connect(lambda cmd: self.diagnostic_init_a0_signal.emit(cmd))
+        self.tcp_server.diagnostic_init_a2_signal.connect(lambda cmd: self.diagnostic_init_a2_signal.emit(cmd))
+        self.tcp_server.real_time_refresh_signal.connect(lambda cmd: self.real_time_refresh_signal.emit(cmd))
+        self.tcp_server.remote_io_error_signal.connect(lambda cmd: self.remote_io_error_signal.emit(cmd))
 
         self.tcp_server.openSession()
 
@@ -168,10 +178,10 @@ class TcpServerThread(QThread):
         ip = ip_msg_tuple[0]
         msg = ip_msg_tuple[1]
 
-        print('network_threads::send_command_from_ui')
-        print(f'Sending {msg} to {ip}')
-
-        self.tcp_server.sendCommand(ip, msg.code, msg.data)
+        #print('network_threads::send_command_from_ui')
+        #print(f'Sending {msg} to {ip}')
+       
+        self.tcp_server.sendCommand(ip, msg)
 
     def initDockConnection(self, ip: str):
         self.tcp_server.initDockConnection(ip)
