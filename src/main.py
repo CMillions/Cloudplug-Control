@@ -1,13 +1,21 @@
-# File:     main.py
-# Author:   Connor DeCamp
-# Created:  07/08/2021
+## 
+# @file main.py
+# @brief Main driver for the software.
 #
 # Some parts taken from https://realpython.com/qt-designer-python/
+#
+# @section file_author Author
+# - Created on 07/08/2021 by Connor DeCamp
+# @section mod_history Modification History
+# - Modified on 07/10/2021
+# - Modified on 07/11/2021
+# - Modified on 07/14/2021
+# - Modified on 08/03/2021
+# - Modified on 10/19/2021
+##
 
 # Standard imports
 import sys
-from typing import List
-
 from PyQt5.QtWidgets import QApplication, QErrorMessage
 
 # User defined imports

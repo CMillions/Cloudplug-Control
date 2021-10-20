@@ -1,9 +1,13 @@
-# File:     network_threads.py
-# Author:   Connor DeCamp
-# Created:  08/25/2021
+##
+# @file network_threads.py
+# @brief Provides threads for network code.
 #
-# This module contains functions and classes related to
-# networking for the CloudPlugs.
+# @section file_author Author
+# - Created on 08/25/2021 by Connor DeCamp
+# @section mod_history Modification History
+# - Modified a lot 
+#
+##
 
 import time
 from typing import List
@@ -42,8 +46,8 @@ class BroadcastThread(QThread):
     device_response = pyqtSignal(object)
 
     def run(self):
-        '''
-        This thread will not stop until the application is
+        '''! Infinite loop that broadcasts UDP packets.
+        @brief This thread will not stop until the application is
         killed. Binds a UDP socket to the host machine LAN IP address
         and a port (not important). Loops forever, occasionally broadcasting
         packets to all devices on LAN. CloudPlugs and Docking Stations will

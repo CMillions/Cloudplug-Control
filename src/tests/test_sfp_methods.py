@@ -1,3 +1,9 @@
+##
+# @file test_sfp_methods.py
+# @brief Unit tests for the methods of the SFP class.
+#
+##
+
 import unittest
 import sys, os, time
 
@@ -42,9 +48,8 @@ class TestSFPMethods(unittest.TestCase):
         self.assertEqual(test_value, expected_value)
 
     def test_get_transceiver_info(self):
-        '''
-        Tests the get_transceiver_info() method
-        '''
+        
+        #Tests the get_transceiver_info() method
         test_transceiver_info = self.sfp.get_transceiver_info()
         
         expected_transceiver_info = ['10GBASE-SR', 'Multimode, 62.5um (M6)', 'Multimode, 50um (M5, M5E)']

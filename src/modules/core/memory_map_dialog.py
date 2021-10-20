@@ -1,9 +1,14 @@
-# File:     main.py
-# Author:   Connor DeCamp
-# Created:  08/04/2021
+##
+# @file memory_map_dialog.py
+# @brief Defines the memory map window. Displays memory map
+#        values in a hex table and shows a characteristics tab
+#        that is dynamically populated.
 #
-# Custom Dialog class to display memory map values in a
-# hex table.
+# @section file_author Author
+# - Created on 08/04/2021 by Connor DeCamp
+# @section mod_history Modification History
+# - None
+##
 
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QHeaderView, QListWidget, \
                             QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \

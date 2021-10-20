@@ -1,4 +1,12 @@
-
+##
+# @file monitor_dialog.py
+# @brief Defines the diagnostic monitoring window.
+#
+# @section file_author Author
+# - Created on 10/18/2021 by Connor DeCamp
+# @section mod_history Modification History
+# - Modified on 10/19/2021 by Connor DeCamp
+##
 
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
@@ -24,13 +32,21 @@ class MonitorDialog(QDialog, Ui_Dialog):
         self.lineEdit_2.setReadOnly(True)
         self.lineEdit_3.setReadOnly(True)
 
-        self.temperatureLineEdit.setReadOnly(True)
-        self.vccLineEdit.setReadOnly(True)
-        self.txBiasCurrentLineEdit.setReadOnly(True)
-        self.txPowerLineEdit.setReadOnly(True)
-        self.rxPowerLineEdit.setReadOnly(True)
-        self.laserTempLineEdit.setReadOnly(True)
-        self.tecCurrentLineEdit.setReadOnly(True)
+        # This is disgusting, but I want to set all of the line edits to be read only
+        line_edits = [self.temperatureLineEdit, self.vccLineEdit, self.txBiasCurrentLineEdit,
+        self.txPowerLineEdit, self.rxPowerLineEdit, self.laserTempLineEdit, self.tecCurrentLineEdit,
+        self.tempHighAlarmLineEdit, self.tempLowAlarmLineEdit, self.vccHighAlarmLineEdit, self.vccLowAlarmLineEdit,
+        self.txBiasHighAlarmLineEdit, self.txBiasLowAlarmLineEdit, self.txPowerHighAlarmLineEdit, self.txPowerLowAlarmLineEdit,
+        self.rxPowerHighAlarmLineEdit, self.rxPowerLowAlarmLineEdit, self.laserTempHighAlarmLineEdit, self.laserTempLowAlarmLineEdit,
+        self.tecCurrentHighAlarmLineEdit, self.tecCurrentLowAlarmLineEdit,
+        self.tempHighWarnLineEdit, self.tempLowWarnLineEdit, self.vccHighWarnLineEdit, self.vccLowWarnLineEdit,
+        self.txBiasHighWarnLineEdit, self.txBiasLowWarnLineEdit, self.txPowerHighWarnLineEdit, self.txPowerLowWarnLineEdit,
+        self.rxPowerHighWarnLineEdit, self.rxPowerLowWarnLineEdit, self.laserTempHighWarnLineEdit, self.laserTempLowWarnLineEdit,
+        self.tecCurrentHighWarnLineEdit, self.tecCurrentLowWarnLineEdit]
+
+        for line_edit in line_edits:
+            line_edit.setReadOnly(True)
+
 
 
         self.timer = QTimer()

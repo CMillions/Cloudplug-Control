@@ -1,3 +1,21 @@
+
+##
+# @file sfp.py
+# @brief Module for interpreting the memory maps of SFP+ devices. See
+#        SFF-8472 standard for more information.
+# @section file_author Author
+# - Created by Connor DeCamp on 07/15/2021
+# @section mod_history Modification History
+# - Modified by Connor DeCamp on 07/19/2021
+# - Modified by Connor DeCamp on 07/20/2021
+# - Modified by Connor DeCamp on 07/27/2021
+# - Modified by Connor DeCamp on 07/28/2021
+# - Modified by Connor DeCamp on 07/29/2021
+# - Modified by Connor DeCamp on 10/01/2021
+# - Modified by Connor DeCamp on 10/18/2021
+##
+
+
 # Author:       Connor DeCamp
 # Created on:   07/15/2021
 #
@@ -11,8 +29,6 @@
 # See SFF-8472 for tables that determine what each
 # value means in the memory map.
 
-from dataclasses import dataclass
-from random import randint
 from typing import List
 from modules.core.convert import *
 from enum import Enum
@@ -44,7 +60,12 @@ class SFP:
     calibration_type: CalibrationType = CalibrationType.UNKNOWN
 
     def __init__(self, page_a0: List[int], page_a2: List[int]):
+        '''! Initalizes the SFP module
 
+        @param page_a0 Array of integers that hold the 0xA0 memory page of an SFP+ EEPROM
+        @param page_a2 Array of integers that hold the 0xA2 memory page of an SFP+ EEPROM
+
+        '''
         self.memory_pages = {}
 
         self.page_a0 = page_a0
@@ -55,15 +76,30 @@ class SFP:
 
         # Sets the calibration type flag for use in
         # the calculation functions
-        if self.page_a0[92] & 0x20:
+
+        EXTERNAL_CALIBRATION_FLAG = self.page_a0[92] & 0x20
+        INTERNAL_CALIBRATION_FLAG = self.page_a0[92] & 0x10
+
+        if EXTERNAL_CALIBRATION_FLAG:
             self.calibration_type = self.CalibrationType.INTERNAL
-        elif self.page_a0[92] & 0x10:
+        elif INTERNAL_CALIBRATION_FLAG:
             self.calibration_type = self.CalibrationType.EXTERNAL
-        
+        else:
+            raise ValueError("Invalid SFP calibration type. Is the memory valid?")
+
     def add_memory_page(self, page_code: int, page_values: List[int]) -> None:
+        '''! Associates a hex value key with a list of integers that represent a memory page from SFP+ EEPROM.
+
+            @param page_code An integer, may be given as hex
+            @param page_values A list of integers that represent that page of EEPROM
+        '''
         self.memory_pages[page_code] = page_values
 
     def get_page(self, page_number: int) -> List[int]:
+        '''! Gets the requested page number from the memory pages dictionary
+
+            @return The list of integers from the associated page number key
+        '''
         return self.memory_pages[page_number]
 
     def get_page_a0(self) -> List[int]:
@@ -1065,7 +1101,7 @@ class SFP:
     def _get_rx_pwr_3(self) -> int:
         '''
         Single precision floating point calibration data - Rx optical
-        power. Bit 7 of byte 56 is MSB. Bit 0 of byte 59 is LSB. Rx_PWR(3)
+        power. Bit 7 of byte 60 is MSB. Bit 0 of byte 63 is LSB. Rx_PWR(3)
         should be set to zero for 'internally calibrated' devices.
         '''
         return ieee754_to_int(
@@ -1076,7 +1112,7 @@ class SFP:
     def _get_rx_pwr_2(self) -> int:
         '''
         Single precision floating point calibration data - Rx optical
-        power. Bit 7 of byte 56 is MSB. Bit 0 of byte 59 is LSB. Rx_PWR(2)
+        power. Bit 7 of byte 64 is MSB. Bit 0 of byte 67 is LSB. Rx_PWR(2)
         should be set to zero for 'internally calibrated' devices.
         '''
         return ieee754_to_int(
@@ -1085,10 +1121,11 @@ class SFP:
         )
 
     def _get_rx_pwr_1(self) -> int:
-        '''
-        Single precision floating point calibration data - Rx optical
-        power. Bit 7 of byte 56 is MSB. Bit 0 of byte 59 is LSB. Rx_PWR(1)
+        '''! Gets a scaling factor for the receiver power.
+        @brief Single precision floating point calibration data - Rx optical
+        power. Bit 7 of byte 68 is MSB. Bit 0 of byte 71 is LSB. Rx_PWR(1)
         should be set to zero for 'internally calibrated' devices.
+
         '''
         return ieee754_to_int(
             self.page_a2[68], self.page_a2[69],
@@ -1098,7 +1135,7 @@ class SFP:
     def _get_rx_pwr_0(self) -> int:
         '''
         Single precision floating point calibration data - Rx optical
-        power. Bit 7 of byte 56 is MSB. Bit 0 of byte 59 is LSB. Rx_PWR(0)
+        power. Bit 7 of byte 72 is MSB. Bit 0 of byte 75 is LSB. Rx_PWR(0)
         should be set to zero for 'internally calibrated' devices.
         '''
         return ieee754_to_int(
@@ -1107,9 +1144,8 @@ class SFP:
         )
 
     def calculate_rx_power_uw(self) -> int:
-        '''
-        Calculates the receiver optical power in uW. Formula for external
-        calibration is:
+        '''! Calculates the receiver optical power in uW. 
+        @brief Formula for external calibration is:
             Rx_PWR(4) * (read value) + 
             Rx_PWR(3) * (read value) + 
             Rx_PWR(2) * (read value) + 
@@ -1137,11 +1173,11 @@ class SFP:
 
 
     def get_tx_i_slope(self) -> int:
-        '''
-        Fixed decimal (unsigned) calibration data, laser bias current.
+        """! Get the slope for the transmitter current.
+        @brief Fixed decimal (unsigned) calibration data, laser bias current.
         Bit 7 of byte 76 is MSB, bit 0 of byte 77 is LSB. Tx_I(slope)
         should be set to 1 for 'internally calibrated' devices.
-        '''
+        """
         return bytes_to_unsigned_decimal(self.page_a2[76], self.page_a2[77])
 
     def get_tx_i_offset(self) -> int:
@@ -1213,53 +1249,55 @@ class SFP:
         '''
         return 0xFF & sum(self.page_a2[0:95])
 
-# Test function, can remove later
-def read_sfp_bin_file(filename: str) -> List[int]:
+    def get_temperature(self) -> float:
+        '''
+        Returns the module temperature. Calibrated
+        16-bit data.
+        '''
+        
+        msb = self.page_a2[96]
+        lsb = self.page_a2[97]
 
-    memory = []
-    with open(filename, 'rb') as file:
-        byte = file.read(1)
-        while byte != b"":
-            # We are reading a Byte object, and we can
-            # access the actual value by indexing it at
-            # 0
-            memory.append(byte[0])
-            byte = file.read(1)
+        converted_val = bytes_to_unsigned_decimal(msb, lsb)
 
-    if len(memory) < 256:
-        for _ in range(256 - len(memory)):
-            memory.append(0)
-            #memory.append(randint(0,255))
+        return Decimal(self.get_temp_slope()) * Decimal(converted_val) + Decimal(self.get_temp_offset())
 
-    return memory
+    def get_vcc(self) -> float:
+        '''
+        Returns the measured supply voltage in transceiver.
+        '''
 
-# Driver program to test functions
-if __name__ == '__main__':
-    sfp = SFP(read_sfp_bin_file('sfp2.bin'), [0] * 256, SFP.CalibrationType.UNKNOWN)
+        slope = self.get_voltage_slope()
+        offset = self.get_voltage_offset()
 
-    print(f'{sfp.get_rate_identifier() = }')
+        return self._real_time_measurement_helper(98, 99, slope, offset)
 
-    print(f'{sfp.get_vendor_name() = }')
+    def get_tx_bias_current(self) -> float:
+        
+        slope = self.get_tx_i_slope()
+        offset = self.get_tx_i_offset()
 
-    print(f'{sfp.get_cc_base() = }')
-    print(f'{hex(sfp.calculate_cc_base()) = }')
-    print(sfp.get_optional_tr_signals())
-    print(sfp.get_vendor_date_code())
-    print(sfp.get_diagnostic_monitoring_type())
-    print(sfp.get_enhanced_options())
+        return self._real_time_measurement_helper(100, 101, slope, offset)
 
-    print(f'{sfp.get_cc_ext() = }')
-    print(f'{hex(sfp.calculate_cc_ext()) = }')
+    def get_tx_power(self) -> float:
+        slope = self.get_tx_pwr_slope()
+        offset = self.get_tx_pwr_offset()
 
-    sfp.page_a0[92] = 0b01101000
+        return self._real_time_measurement_helper(102, 103, slope, offset)
 
-    sfp.page_a2[56] = 0x42
-    sfp.page_a2[57] = 0x8a
-    sfp.page_a2[58] = 0xe2
-    sfp.page_a2[59] = 0x5b
+    def get_rx_power(self):
+        msb = self.page_a2[104]
+        lsb = self.page_a2[105]
 
-    sfp.page_a2[76] = 0xff
-    sfp.page_a2[77] = 0xff
-    print(f'{sfp.get_tx_i_slope() = }')
+        value = self._calibration_helper(msb, lsb)
 
-    print(f'{sfp.calculate_rx_power_uw() = }')
+        if self._calibration_type == self.CalibrationType.INTERNAL:
+            return self.get_rx_pwr_0()
+        elif self._calibration_type == self.CalibrationType.EXTERNAL:
+            return self.get_rx_pwr_4() * value + self.get_rx_pwr_3() * value + \
+                   self.get_rx_pwr_2() * value + self.get_rx_pwr_1() * value + \
+                   self.get_rx_pwr_0()
+        else:
+            raise Exception("ERROR:SFP::get_rx_pwr() - Unknown calibration type")
+
+# END sfp.py

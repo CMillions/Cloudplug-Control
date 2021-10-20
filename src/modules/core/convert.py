@@ -1,10 +1,15 @@
-# Author:       Connor DeCamp
-# Created on:   7/29/2021
+##
+# @file convert.py
+# @brief Provides methods to convert individual bytes to different formats.
 #
-# History:      7/29/2021 - Added byte conversions 
+# @section file_author Author
+# - Created on 07/29/2021 by Connor DeCamp
+# @section mod_history Modification History
+# - Modified on 07/29/2021 by Connor DeCamp 
 #
 # See SFF-8472 for tables that determine what each
 # value means in the memory map.
+##
 
 from decimal import *
 

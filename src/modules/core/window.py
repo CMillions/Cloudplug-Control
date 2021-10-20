@@ -1,11 +1,12 @@
-# File:     main.py
-# Author:   Connor DeCamp
-# Created:  07/08/2021
+## 
+# @file window.py
+# @brief Defines the main window for the application.
 #
-# Window class to interact with the auto-generated gui.py file
-# from QtDesigner. The signal connections will be defined
-# in this file.
-
+# @section file_author Author
+# - Created on 07/08/2021 by Connor DeCamp
+# @section mod_history Modification History
+# - Modified on 10/19/2021 by Connor DeCamp
+##
 from struct import unpack
 import PyQt5
 
@@ -324,6 +325,8 @@ class Window(QMainWindow, Ui_MainWindow):
     def display_monitor_dialog(self):
 
         selected_items = self.dockingStationList.selectedItems()
+
+        self.diagnostic_monitor_dialog.show()
 
         if len(selected_items) != 1:
             temp = QErrorMessage()
