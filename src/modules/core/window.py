@@ -60,6 +60,8 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.verticalHeader().setVisible(False)
 
+
+        self.append_to_debug_log('Starting UDP device discovery thread')
         self.udp_thread = QtCore.QThread()
         self.worker = BroadcastWorker()
         self.worker.moveToThread(self.udp_thread)
@@ -69,8 +71,10 @@ class Window(QMainWindow, Ui_MainWindow):
         self.kill_signal.connect(self.worker.cleanup)
         self.udp_thread.start()
 
-        self.append_to_debug_log('Starting UDP device discovery thread')
 
+        ###
+        #
+        ###
         #udp_thread = BroadcastThread()
         #udp_thread.device_response.connect(self.handleUdpClientMessage)
         #self.kill_signal.connect(udp_thread.main_window_close_event_handler)
@@ -100,6 +104,13 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_thread.started.connect(self.tcp_server.open_session)
         self.tcp_thread.start()
 
+        ###
+        # This code was commented out in favor of the above code.
+        # There is no more need for a class that subclasses the QThread
+        # object. Instead, it's moved to a thread that we own.
+        ###
+
+        #TODO: Think about removing this commented out code
         # It's a lot to type, so use a temp variable to access the tcp_server of the thread
         # to connect slots
         # self.tcp_server_thread = TcpServerThread()

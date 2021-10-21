@@ -17,7 +17,7 @@ from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 
 from modules.network.message import MESSAGE_BYTES, Message, MessageCode
-from modules.network.tcp_server import MyTCPServer
+from modules.network.tcp_server import TCPServer
 from modules.network.utility import *
 
 class BroadcastWorker(QObject):
@@ -213,7 +213,7 @@ class TcpServerThread(QThread):
         @returns nothing
         '''
 
-        self.tcp_server = MyTCPServer()
+        self.tcp_server = TCPServer()
 
         self.tcp_server.client_connected_signal.connect(self.emit_client_connected_signal)
         self.tcp_server.client_disconnected_signal.connect(self.emit_client_disconnected_signal)

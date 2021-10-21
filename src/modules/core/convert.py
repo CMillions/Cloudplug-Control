@@ -52,7 +52,7 @@ def ieee754_to_int(b3: int, b2: int, b1: int, b0: int) -> int:
     
     return result
 
-def bytes_to_unsigned_decimal(b1: int, b0: int) -> Decimal:
+def slope_bytes_to_unsigned_decimal(b1: int, b0: int) -> Decimal:
     '''
     Takes in 2 bytes, formatted as b1.b0 and returns the
     unsigned decimal equivalent. For example:
@@ -62,67 +62,97 @@ def bytes_to_unsigned_decimal(b1: int, b0: int) -> Decimal:
     Number it represents is 1111 1111.1111 1111
     which is 255 + (255) / 256
     '''
+    b1 &= 0xFF
+    b0 &= 0xFF
 
-    integer = Decimal(str(b1))
-    mantissa_str = format(b0, '08b')
-    mantissa_int = Decimal('0')
-    power = -1
+    b1_weights = [128, 64, 32, 16, 8, 4, 2, 1]
+    b0_weights = [1/2.0, 1/4.0, 1/8.0, 1/16.0, 1/32.0, 1/64.0, 1/128.0, 1/256.0]
 
-    for b in mantissa_str:
-        mantissa_int += Decimal(str(int(b) * pow(2, power)))
-        power -= 1
-
-    return Decimal(str(integer + mantissa_int))
-
-def bytes_to_signed_twos_complement_decimal(b1: int, b0: int) -> Decimal:
-    
-    if (b1 & (1 << 7)) != 0:
-        b1 = ~(b1)
-        b0 = ~(b0) + 1
-        return -bytes_to_unsigned_decimal(b1 & 0xFF, b0 & 0xFF)
-    else:
-        return bytes_to_unsigned_decimal(b1 & 0xFF, b0 & 0xFF)
-
-def signed_twos_complement_to_int(b1: int, b0: int) -> int:
-    '''
-    Takes two bytes (b1, b0) and converts it from signed two's complement
-    into an integer.
-    '''
-
-    bit_string = format(b1, '08b') + format(b0, '08b')
-    bits = len(bit_string)
-    val = int(bit_string, 2)
-
-    if (val & (1 << (bits - 1))) != 0:
-        val = val - (1 << bits)
-    
-    return val
-
-def bytes_to_tec_current(b1: int, b0: int) -> float:
-    '''
-    See SFF8472 for TEC current formats. It's a signed twos complement
-    floating point number, so we have to convert it. We also have to use
-    the correct bit weights.
-    '''
-
-    b1_weights = [1638.4, 819.2, 409.6, 204.8, 102.4, 51.2, 25.6]
-    b0_weights = [12.8, 6.4, 3.2, 1.6, 0.8, 0.4, 0.2, 0.1]
-
-    if b1 & (1 << 7):
-        b1 = ~(b1)
-        b0 = ~(b0) + 1
-
-    mask = 0xFF
-
-    val = 0
-
+    ans = 0
+    mask = 0x80
     i = 0
     while mask > 0:
         if b1 & mask:
-            val += b1_weights[i]
+            ans += b1_weights[i]
         if b0 & mask:
-            val += b0_weights[i]
+            ans += b0_weights[i]
+        mask = mask >> 1
+        i += 1
 
-        mask = mask // 2
+    return ans
+
+def temperature_bytes_to_signed_twos_complement_decimal(b1: int, b0: int) -> float:
+    '''
+    Takes in 2 bytes, formatted as b1.b0 and returns the
+    signed two's complement decimal equivalent.
+
+    @param b1 Most significant byte
+    @param b2 Least significant byte
     
-    return val
+    @return A float in the range [-127.996, +127.996]
+    '''
+    b1 &= 0xFF
+    b0 &= 0xFF
+
+    b1_weights = [64, 32, 16, 8, 4, 2, 1]
+    b0_weights = [1/2.0, 1/4.0, 1/8.0, 1/16.0, 1/32.0, 1/64.0, 1/128.0, 1/256.0]
+
+    sign = ((b1 & 0x80) >> 7)
+    ans = 0
+
+    # Start with 0b0100 0000 since the
+    # first bit is the sign
+    b1_mask = 0x40
+    i = 0
+    while b1_mask > 0:
+        if b1 & b1_mask:
+            ans += b1_weights[i]
+        b1_mask = b1_mask >> 1
+        i += 1
+
+    b0_mask = 0x80
+    i = 0
+    while b0_mask > 0:
+        if b0 & b0_mask:
+            ans += b0_weights[i]
+        
+        b0_mask = b0_mask >> 1
+        i += 1
+
+    if sign == 1:
+        ans = ans - 128
+
+    return ans
+
+def offset_bytes_to_signed_twos_complement_int(b1: int, b0: int) -> int:
+    '''! Converts two bytes formatted as b1 b0 in signed twos complement and
+    converts them to an integer.
+
+    @param b1 Most significant byte
+    @param b2 Least significant byte
+
+    @return An integer in the range [-32768, +32767]
+    '''
+    b1 &= 0xFF
+    b0 &= 0xFF
+
+    ans = 0x0000
+    ans += (b1 << 8) | b0
+    sign = (ans & 0x8000) >> 15
+
+    if sign == 1:
+        ans = ans - 65536
+
+    return ans
+
+
+def bytes_to_tec_current(b1: int, b0: int) -> float:
+    '''! Converts bytes that represent TEC current to the actual
+    TEC current value.
+
+    @param b1 Most significant byte
+    @param b0 Least significant byte
+    @return A value in the range [-3276.8, 3276.7]
+    '''
+
+    return offset_bytes_to_signed_twos_complement_int(b1, b0) / 10.0

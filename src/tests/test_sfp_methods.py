@@ -4,8 +4,10 @@
 #
 ##
 
+import os
+import sys
+import time
 import unittest
-import sys, os, time
 
 # This is here to make the import work when ran from the main folder
 # in VSCode
