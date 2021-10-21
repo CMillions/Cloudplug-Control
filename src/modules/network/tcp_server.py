@@ -33,7 +33,6 @@ class MyTCPServer(QObject):
 
         self.expected_clients = 0
 
-        
 
     def openSession(self):
                 
@@ -189,7 +188,7 @@ class MyTCPServer(QObject):
         if MessageCode(code) in read_register_acks:
             sent_cmd = bytesToReadRegisterMessage(raw_msg)
         else:
-            sent_cmd = unpackRawBytes(raw_msg)
+            sent_cmd = bytesToMessage(raw_msg)
 
         #print(sent_cmd)
         #print(f'Client at {client_ip} sent a message: {sent_cmd}')

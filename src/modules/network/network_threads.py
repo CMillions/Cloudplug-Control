@@ -9,16 +9,59 @@
 #
 ##
 
+from sys import dont_write_bytecode
 import time
 from typing import List
 
-from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
+from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 
-from modules.network.message import Message, MessageCode
+from modules.network.message import MESSAGE_BYTES, Message, MessageCode
 from modules.network.tcp_server import MyTCPServer
 from modules.network.utility import *
 
+class BroadcastWorker(QObject):
+
+    device_response = pyqtSignal(object)
+
+    def on_thread_start(self):
+        local_ip_str = get_LAN_ip_address()
+        broadcast_ip_str = get_LAN_broadcast_address(local_ip_str)
+
+        self.sock = QUdpSocket()
+        self.port = 20100
+        self.bind_address = QHostAddress(local_ip_str)
+        self.broadcast_address = QHostAddress(broadcast_ip_str)
+
+        self.sock.bind(self.bind_address, self.port)
+
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.do_broadcast)
+        self.timer.start(1000)
+        
+
+    def do_broadcast(self):
+
+        msg = Message(MessageCode.DISCOVER, "DISCOVER")
+        print("Doing broadcast")
+
+        self.sock.writeDatagram(QByteArray(msg.to_network_message()), self.broadcast_address, self.port)
+        while self.sock.hasPendingDatagrams():
+            msg_tuple = self.sock.readDatagram(MESSAGE_BYTES)
+
+            binary_contents = msg_tuple[0]
+            sender_ip_addr = msg_tuple[1].toString()
+            sender_port = msg_tuple[2]
+
+            if sender_ip_addr != self.bind_address.toString():
+                self.device_response.emit(msg_tuple)
+
+        self.timer.start(1000)
+
+    def cleanup(self):
+        self.timer.stop()
+        self.sock.close()
 
 class BroadcastThread(QThread):
     '''
