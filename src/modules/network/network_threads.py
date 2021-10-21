@@ -6,10 +6,10 @@
 # - Created on 08/25/2021 by Connor DeCamp
 # @section mod_history Modification History
 # - Modified a lot 
+# - Modified by Connor DeCamp on 10/21/21
 #
 ##
 
-from sys import dont_write_bytecode
 import time
 from typing import List
 
@@ -21,47 +21,71 @@ from modules.network.tcp_server import MyTCPServer
 from modules.network.utility import *
 
 class BroadcastWorker(QObject):
+    '''! Worker object that sends out UDP broadcast packets.
+    
+    @brief Uses QTimer to signal a timeout event every __TIMEOUT_MSEC
+    milliseconds. When the timeout event occurs, it signals the do_broadcast()
+    slot.
 
+    '''
+    # This signal is emitted when a UDP response is received
     device_response = pyqtSignal(object)
 
+    # The amount of time in msec before the timer times out
+    __TIMEOUT_MSEC = 1000
+
     def on_thread_start(self):
+        '''! Called when the thread starts.
+
+        @brief Creates a UDP socket and binds it to the machine's local IP 
+        address on port 20100. Also finds and saves the LAN broadcast address.
+        '''
         local_ip_str = get_LAN_ip_address()
         broadcast_ip_str = get_LAN_broadcast_address(local_ip_str)
 
-        self.sock = QUdpSocket()
-        self.port = 20100
-        self.bind_address = QHostAddress(local_ip_str)
-        self.broadcast_address = QHostAddress(broadcast_ip_str)
+        self._sock = QUdpSocket()
+        self._port = 20100
+        self._bind_address = QHostAddress(local_ip_str)
+        self._broadcast_address = QHostAddress(broadcast_ip_str)
 
-        self.sock.bind(self.bind_address, self.port)
+        self._sock.bind(self._bind_address, self._port)
 
 
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.do_broadcast)
-        self.timer.start(1000)
+        self._timer = QTimer()
+        self._timer.timeout.connect(self.do_broadcast)
+        self._timer.start(self.__TIMEOUT_MSEC)
         
 
     def do_broadcast(self):
+        '''! Sends a broadcast packet on the local network.
 
+        @brief Writes a UDP broadcast on the local network and checks to see if there are
+        any responses to it. If there is a response from another device, it emits the
+        device_response signal with the message contents.
+        '''
         msg = Message(MessageCode.DISCOVER, "DISCOVER")
-        print("Doing broadcast")
 
-        self.sock.writeDatagram(QByteArray(msg.to_network_message()), self.broadcast_address, self.port)
-        while self.sock.hasPendingDatagrams():
-            msg_tuple = self.sock.readDatagram(MESSAGE_BYTES)
+        self._sock.writeDatagram(QByteArray(msg.to_network_message()), self._broadcast_address, self._port)
+        while self._sock.hasPendingDatagrams():
+            msg_tuple = self._sock.readDatagram(MESSAGE_BYTES)
 
             binary_contents = msg_tuple[0]
             sender_ip_addr = msg_tuple[1].toString()
             sender_port = msg_tuple[2]
 
-            if sender_ip_addr != self.bind_address.toString():
+            # If the sender's IP address is not our local address
+            if sender_ip_addr != self._bind_address.toString():
                 self.device_response.emit(msg_tuple)
 
-        self.timer.start(1000)
+        # Restart the timer to infinitely do broadcast messages
+        self._timer.start(self.__TIMEOUT_MSEC)
 
     def cleanup(self):
-        self.timer.stop()
-        self.sock.close()
+        '''! This thread cleans up the worker object.
+        @brief Stops the timer and closes the socket.
+        '''
+        self._timer.stop()
+        self._sock.close()
 
 class BroadcastThread(QThread):
     '''
@@ -191,17 +215,17 @@ class TcpServerThread(QThread):
 
         self.tcp_server = MyTCPServer()
 
-        self.tcp_server.client_connected_signal.connect(self.emitClientConnectedSignal)
-        self.tcp_server.client_disconnected_signal.connect(self.emitClientDisconnectedSignal)
-        self.tcp_server.update_ui_signal.connect(self.emitUpdateUiSignal)
-        self.tcp_server.log_signal.connect(self.emitLogSignal)
+        self.tcp_server.client_connected_signal.connect(self.emit_client_connected_signal)
+        self.tcp_server.client_disconnected_signal.connect(self.emit_client_disconnected_signal)
+        self.tcp_server.update_ui_signal.connect(self.emit_update_ui_signal)
+        self.tcp_server.log_signal.connect(self.emit_log_signal)
 
         self.tcp_server.diagnostic_init_a0_signal.connect(lambda cmd: self.diagnostic_init_a0_signal.emit(cmd))
         self.tcp_server.diagnostic_init_a2_signal.connect(lambda cmd: self.diagnostic_init_a2_signal.emit(cmd))
         self.tcp_server.real_time_refresh_signal.connect(lambda cmd: self.real_time_refresh_signal.emit(cmd))
         self.tcp_server.remote_io_error_signal.connect(lambda cmd: self.remote_io_error_signal.emit(cmd))
 
-        self.tcp_server.openSession()
+        self.tcp_server.open_session()
 
         # Qt documentation says this shouldn't be needed
         # but this makes the thread stay alive, therefore
@@ -224,24 +248,24 @@ class TcpServerThread(QThread):
         #print('network_threads::send_command_from_ui')
         #print(f'Sending {msg} to {ip}')
        
-        self.tcp_server.sendCommand(ip, msg)
+        self.tcp_server.send_command(ip, msg)
 
-    def initDockConnection(self, ip: str):
-        self.tcp_server.initDockConnection(ip)
+    def init_dock_connection(self, ip: str):
+        self.tcp_server.init_dock_connection(ip)
 
-    def initCloudplugConnection(self, ip: str):
-        self.tcp_server.initCloudplugConnection(ip)
+    def init_cloudplug_connection(self, ip: str):
+        self.tcp_server.init_cloudplug_connection(ip)
 
-    def emitClientConnectedSignal(self, data: object):
+    def emit_client_connected_signal(self, data: object):
         self.client_connected_signal.emit(data)
 
-    def emitClientDisconnectedSignal(self, data: object):
+    def emit_client_disconnected_signal(self, data: object):
         self.client_disconnected_signal.emit(data)
 
-    def emitUpdateUiSignal(self, code: MessageCode):
+    def emit_update_ui_signal(self, code: MessageCode):
         self.update_ui_signal.emit(code)
 
-    def emitLogSignal(self, data: object):
+    def emit_log_signal(self, data: object):
         self.log_signal.emit(data)
 
 

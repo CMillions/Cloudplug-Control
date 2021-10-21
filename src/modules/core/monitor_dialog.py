@@ -6,14 +6,23 @@
 # - Created on 10/18/2021 by Connor DeCamp
 # @section mod_history Modification History
 # - Modified on 10/19/2021 by Connor DeCamp
+# - Modified on 10/20/2021 by Connor DeCamp
+# - Modified on 10/21/2021 by Connor DeCamp
 ##
 
+##
+# Third Party Library Imports
+##
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
+
+##
+# Local Library Imports
+##
 from modules.core.monitor_dialog_autogen import Ui_Dialog
 from modules.core.sfp import *
 
-class MonitorDialog(QDialog, Ui_Dialog):
+class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
 
     timed_command = pyqtSignal()
 
@@ -24,6 +33,8 @@ class MonitorDialog(QDialog, Ui_Dialog):
     dock_ip = ""
 
     def __init__(self, parent=None):
+        '''! Initilazes the Diagnostic Monitoring Dialgo
+        '''
         super().__init__(parent)
         self.setupUi(self)
 
@@ -116,11 +127,11 @@ class MonitorDialog(QDialog, Ui_Dialog):
     def _emit_command_restart_timer(self):
         self.timed_command.emit()
         print(f'{self.associated_sfp.page_a2[96:98]}')
-        self.startTimer()
+        self.start_timer()
 
-    def startTimer(self):
+    def start_timer(self):
         self.timer.start(self.MESSAGE_INTERVAL_MSEC)
 
-    def closeEvent(self, event):
+    def handle_close_event(self, event):
         self.timer.stop()
         event.accept()

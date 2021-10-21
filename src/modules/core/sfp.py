@@ -1,8 +1,6 @@
-
 ##
 # @file sfp.py
-# @brief Module for interpreting the memory maps of SFP+ devices. See
-#        SFF-8472 standard for more information.
+# @brief Module for interpreting the memory maps of SFP+ devices.
 # @section file_author Author
 # - Created by Connor DeCamp on 07/15/2021
 # @section mod_history Modification History
@@ -13,50 +11,41 @@
 # - Modified by Connor DeCamp on 07/29/2021
 # - Modified by Connor DeCamp on 10/01/2021
 # - Modified by Connor DeCamp on 10/18/2021
+# - Modified by Connor DeCamp on 10/20/2021
 ##
-
-
-# Author:       Connor DeCamp
-# Created on:   07/15/2021
-#
-# History:      07/19/2021 - Added more getters for page a0
-#               07/20/2021 - Finished getters for page a0
-#               07/27/2021 - Started getters for page a2
-#               07/28/2021 - Continued work on getters for page a2
-#               07/29/2021 - Moved conversions to convert.py
-#               10/01/2021 - Fixed get_transceiver() method
-#
-# See SFF-8472 for tables that determine what each
-# value means in the memory map.
 
 from typing import List
 from modules.core.convert import *
 from enum import Enum
 
 class SFP:
-    '''
+    '''! Class used for interpreting EEPROM values of SFP+ modules.
     Has two lists of integers that represent the memory map
-    of SFP/SFP+ modules. The provided getter methods can return any
-    information about the module, including vendor information, diagnostic
-    monitoring support, and alarm/warning thresholds.
+    of SFP/SFP+ modules. These are referred to by the I2C address of
+    the memory, 0xA0 and 0xA2. These are sometimes referred to as 0x50 and 0x51,
+    respective. The change is due to the 7-bit addressing supported by SFP+ modules.
     '''
 
     # Enumeration for SFP Diagnostic Monitoring types,
     # whether values are internally or externally calibrated
     class CalibrationType(Enum):
+        '''! Enumeration for SFP+ calibration types. Modules can
+        be either internally and externally calibrated.
+        '''
         UNKNOWN = 0,
         INTERNAL = 1,
         EXTERNAL = 2
 
-    # Holds the data values from page 0xA0 of the SFP memory map
+    ## Holds the data values from page 0xA0 of the SFP memory map
     page_a0 : List[int]
 
-    # Holds the data values from page 0xA2 of the SFP memory map
+    ## Holds the data values from page 0xA2 of the SFP memory map
     page_a2 : List[int]
 
+    ## Dictionary of memory pages
     memory_pages: dict
 
-    # Holds the calibration type of the module
+    ## Holds the calibration type of the module
     calibration_type: CalibrationType = CalibrationType.UNKNOWN
 
     def __init__(self, page_a0: List[int], page_a2: List[int]):

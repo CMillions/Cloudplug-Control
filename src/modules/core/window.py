@@ -8,55 +8,69 @@
 # - Modified on 10/19/2021 by Connor DeCamp
 ##
 
+##
+# Standard Imports
+##
+import time
+from typing import Tuple
+
+##
+# Third Party Library Imports
+##
 from PyQt5 import QtCore
 from PyQt5.QtNetwork import QHostAddress
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QListWidget, \
                             QListWidgetItem, QPlainTextEdit, QTableWidgetItem, QMainWindow
 
-                            
-from modules.core.monitor_dialog import MonitorDialog
+##
+# Local Library Imports
+## 
+from modules.core.monitor_dialog import DiagnosticMonitorDialog
 from modules.core.window_autogen import Ui_MainWindow
 from modules.core.memory_map_dialog import MemoryMapDialog
 from modules.network.message import MessageCode, Message, ReadRegisterMessage, bytesToMessage
-from modules.network.network_threads import BroadcastThread, BroadcastWorker, TcpServerThread
+from modules.network.network_threads import BroadcastWorker
 from modules.network.sql_connection import SQLConnection
-from modules.network.tcp_server import MyTCPServer
+from modules.network.tcp_server import TCPServer
 from modules.network.utility import DeviceType
 from modules.core.sfp import SFP
 
-from typing import Tuple
-import time
-
-
 class Window(QMainWindow, Ui_MainWindow):
+    '''! Defines the main window of the application.
+    '''    
+    ##
+    # Using more than one space before assignment statements
+    # is bad according to PEP 8.
+    ##
 
-    send_command_signal         = QtCore.pyqtSignal(object)
-    kill_signal                 = QtCore.pyqtSignal(int)
-    dock_discover_signal        = QtCore.pyqtSignal(str)
-    cloudplug_discover_signal   = QtCore.pyqtSignal(str)
+    kill_signal = QtCore.pyqtSignal(int)
+    send_command_signal = QtCore.pyqtSignal(object)
+    dock_discover_signal = QtCore.pyqtSignal(str)
+    cloudplug_discover_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
 
         # User-defined setup methods
-        self.connectSignalSlots()
+        self.connect_signal_slots()
 
         # Allow columns to adjust to their contents
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.verticalHeader().setVisible(False)
 
-        self.th = QtCore.QThread()
+        self.udp_thread = QtCore.QThread()
         self.worker = BroadcastWorker()
-        self.worker.moveToThread(self.th)
+        self.worker.moveToThread(self.udp_thread)
 
-        self.worker.device_response.connect(self.handleUdpClientMessage)
-        self.th.started.connect(self.worker.on_thread_start)
+        self.worker.device_response.connect(self.handle_udp_client_message)
+        self.udp_thread.started.connect(self.worker.on_thread_start)
         self.kill_signal.connect(self.worker.cleanup)
-        self.th.start()
+        self.udp_thread.start()
 
-        self.appendToDebugLog('Starting UDP device discovery thread')
+        self.append_to_debug_log('Starting UDP device discovery thread')
+
         #udp_thread = BroadcastThread()
         #udp_thread.device_response.connect(self.handleUdpClientMessage)
         #self.kill_signal.connect(udp_thread.main_window_close_event_handler)
@@ -64,26 +78,26 @@ class Window(QMainWindow, Ui_MainWindow):
 
         
         
-        self.appendToDebugLog('Starting TCP server thread')
-        self.tcp_server = MyTCPServer()
-        self.tcp_server.client_connected_signal.connect(self.tcpClientConnectHandler)
-        self.tcp_server.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
-        self.tcp_server.update_ui_signal.connect(self.updateUiSignalHandler)
-        self.tcp_server.log_signal.connect(self.appendToDebugLog)
+        self.append_to_debug_log('Starting TCP server thread')
+        self.tcp_thread = QtCore.QThread()
+        self.tcp_server = TCPServer()
+        self.tcp_server.moveToThread(self.tcp_thread)
+        self.tcp_server.client_connected_signal.connect(self.handle_tcp_client_connect)
+        self.tcp_server.client_disconnected_signal.connect(self.handle_tcp_client_disconnect)
+        self.tcp_server.update_ui_signal.connect(self.handle_update_ui_signal)
+        self.tcp_server.log_signal.connect(self.append_to_debug_log)
 
         self.tcp_server.diagnostic_init_a0_signal.connect(self.handle_init_diagnostic_a0)
         self.tcp_server.diagnostic_init_a2_signal.connect(self.handle_init_diagnostic_a2)
         self.tcp_server.real_time_refresh_signal.connect(self.handle_real_time_refresh)
         self.tcp_server.remote_io_error_signal.connect(self.handle_remote_io_error)
 
-        self.dock_discover_signal.connect(self.tcp_server.initDockConnection)
-        self.cloudplug_discover_signal.connect(self.tcp_server.initCloudplugConnection)
-        self.send_command_signal.connect(self.tcp_server.sendCommandSignalHandler)
+        self.dock_discover_signal.connect(self.tcp_server.init_dock_connection)
+        self.cloudplug_discover_signal.connect(self.tcp_server.init_cloudplug_connection)
+        self.send_command_signal.connect(self.tcp_server.handle_send_command_signal)
         self.kill_signal.connect(self.tcp_server._close_all_connections)
-
-        self.tcp_thread = QtCore.QThread()
-        self.tcp_thread.started.connect(self.tcp_server.openSession)
-        self.tcp_server.moveToThread(self.tcp_thread)
+        
+        self.tcp_thread.started.connect(self.tcp_server.open_session)
         self.tcp_thread.start()
 
         # It's a lot to type, so use a temp variable to access the tcp_server of the thread
@@ -107,10 +121,10 @@ class Window(QMainWindow, Ui_MainWindow):
         #self.tcp_server_thread.start()
 
 
-        self.diagnostic_monitor_dialog = MonitorDialog(self)
+        self.diagnostic_monitor_dialog = DiagnosticMonitorDialog(self)
         self.diagnostic_monitor_dialog.timed_command.connect(self.handle_diagnostic_timer_timeout)
 
-    def connectSignalSlots(self):
+    def connect_signal_slots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
         self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
         self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
@@ -149,10 +163,10 @@ class Window(QMainWindow, Ui_MainWindow):
         # Create SFP object after reading from database
 
         memory_dialog = MemoryMapDialog(self)
-        memory_dialog.initializeTableValues(sfp)
+        memory_dialog.initialize_table_values(sfp)
         memory_dialog.show()
 
-    def appendRowInSFPTable(self, values: Tuple) -> None:
+    def append_row_to_sfp_table(self, values: Tuple) -> None:
 
         ID = 0
         VENDOR_ID = 1
@@ -199,13 +213,13 @@ class Window(QMainWindow, Ui_MainWindow):
             print(f'{self.tableWidget.model().data(model_index) = }')
 
 
-    def handleUdpClientMessage(self, contents_ip_port_tuple: Tuple):
+    def handle_udp_client_message(self, contents_ip_port_tuple: Tuple):
         '''
         Handles the message from a UDP client. 
         '''
-        raw_data:    bytes         = contents_ip_port_tuple[0]
-        sender_ip:   QHostAddress  = contents_ip_port_tuple[1].toString()
-        sender_port: int           = contents_ip_port_tuple[2]
+        raw_data = contents_ip_port_tuple[0]
+        sender_ip = contents_ip_port_tuple[1].toString()
+        sender_port = contents_ip_port_tuple[2]
 
         # DEBUG message
         # self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')        
@@ -213,18 +227,18 @@ class Window(QMainWindow, Ui_MainWindow):
 
         received_message = bytesToMessage(raw_data)
 
-        self.appendToDebugLog(received_message)
+        self.append_to_debug_log(received_message)
 
         if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
-            self.appendToDebugLog(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
+            self.append_to_debug_log(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
             print(f"Emitting DOCK {sender_ip}")
             self.dock_discover_signal.emit(sender_ip)
         elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
-            self.appendToDebugLog(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
+            self.append_to_debug_log(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
             print(f"Emitting CLOUDPLUG {sender_ip}")
             self.cloudplug_discover_signal.emit(sender_ip)
         else:
-            self.appendToDebugLog(f"Unknown data from {sender_ip}:{sender_port}")
+            self.append_to_debug_log(f"Unknown data from {sender_ip}:{sender_port}")
 
     def clone_sfp_memory_button_handler(self):
         '''
@@ -254,8 +268,8 @@ class Window(QMainWindow, Ui_MainWindow):
             self.send_command_signal.emit(msg_tuple)
             
 
-    def tcpClientConnectHandler(self, data: object):
-        self.appendToDebugLog(f"Successful TCP connection from {data}")
+    def handle_tcp_client_connect(self, data: object):
+        self.append_to_debug_log(f"Successful TCP connection from {data}")
 
         device_type = data[0]
         device_ip = data[1]
@@ -265,7 +279,7 @@ class Window(QMainWindow, Ui_MainWindow):
         elif device_type == DeviceType.CLOUDPLUG:
             self.listWidget.addItem(QListWidgetItem(device_ip))
 
-    def tcpClientDisconnectHandler(self, data: str):
+    def handle_tcp_client_disconnect(self, data: str):
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
         
@@ -284,15 +298,15 @@ class Window(QMainWindow, Ui_MainWindow):
                 self.listWidget.takeItem(row_of_item)
 
 
-    def updateUiSignalHandler(self, code: MessageCode):
+    def handle_update_ui_signal(self, code: MessageCode):
         
         if code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
-            self.appendToDebugLog("A docking station successfully, cloned SFP memory")
-            self._refreshSfpTable()
+            self.append_to_debug_log("A docking station successfully, cloned SFP memory")
+            self._refresh_sfp_table()
 
-    def _refreshSfpTable(self):
+    def _refresh_sfp_table(self):
         sql_statement = "SELECT * FROM sfp"
-        self.appendToDebugLog(f"Executing SQL STATEMENT: {sql_statement}")
+        self.append_to_debug_log(f"Executing SQL STATEMENT: {sql_statement}")
         
         db = SQLConnection()
 
@@ -303,7 +317,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         for data_tuple in cursor:
             print(data_tuple)
-            self.appendRowInSFPTable(data_tuple)
+            self.append_row_to_sfp_table(data_tuple)
 
         db.close()
     
@@ -353,7 +367,7 @@ class Window(QMainWindow, Ui_MainWindow):
             msg = ReadRegisterMessage(MessageCode.DIAGNOSTIC_INIT_A2, "", 0x51, page_a2_registers)
             self.send_command_signal.emit((dock_ip, msg))
 
-            self.diagnostic_monitor_dialog.startTimer()
+            self.diagnostic_monitor_dialog.start_timer()
             self.diagnostic_monitor_dialog.show()
 
     def handle_init_diagnostic_a0(self, cmd: ReadRegisterMessage):
@@ -426,15 +440,15 @@ class Window(QMainWindow, Ui_MainWindow):
     ##
     # Utility functions
     ##
-    def closeEvent(self, event):
+    def handle_close_event(self, event):
         print("Closing the window")
 
         self.kill_signal.emit(-1)
         self.tcp_thread.exit()
-        self.th.exit()
+        self.udp_thread.exit()
         event.accept()
 
-    def appendToDebugLog(self, text: str):
+    def append_to_debug_log(self, text: str):
         
         text_edit = self.logTab.findChild(QPlainTextEdit, 'plainTextEdit')
 

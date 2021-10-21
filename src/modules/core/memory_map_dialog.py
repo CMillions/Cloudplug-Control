@@ -53,8 +53,8 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         for i in range(16):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
 
-        self.comboBox.activated[str].connect(self.changeTableDisplayMode)
-        self.comboBox_2.activated[str].connect(self.changeMemoryPage)
+        self.comboBox.activated[str].connect(self.change_table_display_mode)
+        self.comboBox_2.activated[str].connect(self.change_memory_page)
 
         self.selected_memory_page = 0xA0
 
@@ -69,7 +69,7 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         
 
 
-    def initializeTableValues(self, sfp_to_show: SFP):
+    def initialize_table_values(self, sfp_to_show: SFP):
         
         self.associated_sfp = sfp_to_show
 
@@ -88,11 +88,11 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
             self.tableWidget.setItem(row, col, item_to_add)
         
         # Fill in the values on the characteristics page
-        self.generateCharacteristicsTable()
+        self.generate_characteristics_table()
 
         
 
-    def changeTableDisplayMode(self, selection: str):
+    def change_table_display_mode(self, selection: str):
 
         if selection == 'Hex' and self.selected_display_mode != self.DisplayType.HEX:
             self.selected_display_mode = self.DisplayType.HEX
@@ -105,10 +105,10 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
 
 
         self.tableWidget.setUpdatesEnabled(False)
-        self.updateTable()
+        self.update_table()
         self.tableWidget.setUpdatesEnabled(True)
 
-    def updateTable(self):
+    def update_table(self):
 
         memory_to_display = self.associated_sfp.memory_pages[self.selected_memory_page]
 
@@ -131,14 +131,14 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
             else:
                 raise Exception("ERROR:memory_map_dialog.py::Unknown display type for memory table.")
 
-    def changeMemoryPage(self, selection: str):
+    def change_memory_page(self, selection: str):
         self.selected_memory_page = int(selection, base=16)
-        self.updateTable()
+        self.update_table()
 
 
     # Functions for Characteristics tab
 
-    def generateCharacteristicsTable(self):
+    def generate_characteristics_table(self):
         '''
         Fills in the characteristics of the SFP module associated
         with the memory page being shown. The table fields come from
@@ -199,7 +199,7 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         self.tableWidget_2.resizeRowsToContents()
 
 
-    def closeEvent(self, event):
+    def handle_close_event(self, event):
         self.deleteLater()
         event.accept()
             
