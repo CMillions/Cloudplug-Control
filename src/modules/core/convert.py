@@ -14,8 +14,7 @@
 from decimal import *
 
 def ieee754_to_int(b3: int, b2: int, b1: int, b0: int) -> int:
-    '''
-    Takes 4 bytes in IEEE 754 floating point format and converts it into a floating point
+    '''! Takes 4 bytes in IEEE 754 floating point format and converts it into a floating point
     number as per the IEEE 754 specification. The MSB (bit 31) is the sign bit,
     bits 2-9 are the exponent, and the rest belong to the mantissa.
 
@@ -23,11 +22,17 @@ def ieee754_to_int(b3: int, b2: int, b1: int, b0: int) -> int:
     E = Exponent
     M = Mantissa
     
-    (Byte, Contents, Significance)\n
-    (b3,     SEEEEEEE,       most)\n
-    (b2,     EMMMMMMM,    second most)\n
-    (b1,     MMMMMMMM,    second least)\n
-    (b0,     MMMMMMMM,       least)\n
+    (Byte, Contents, Significance)
+    (b3,     SEEEEEEE,       most)
+    (b2,     EMMMMMMM,    second most)
+    (b1,     MMMMMMMM,    second least)
+    (b0,     MMMMMMMM,       least)
+
+    @param b3 Most significant byte
+    @param b2 Second most significant byte
+    @param b1 Second least significant byte
+    @param b0 Least significant byte
+    @return A signed floating point value
     '''
 
     # Put bytes into array to make it easier to
@@ -82,8 +87,7 @@ def slope_bytes_to_unsigned_decimal(b1: int, b0: int) -> Decimal:
     return ans
 
 def temperature_bytes_to_signed_twos_complement_decimal(b1: int, b0: int) -> float:
-    '''
-    Takes in 2 bytes, formatted as b1.b0 and returns the
+    '''! Takes in 2 bytes, formatted as b1.b0 and returns the
     signed two's complement decimal equivalent.
 
     @param b1 Most significant byte

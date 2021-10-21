@@ -10,10 +10,14 @@ import os
 import sys
 import unittest
 
+
+from decimal import Decimal
+
 # This is here to make the import work when ran from the main folder
 # in VSCode
 myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
+
 
 from modules.core.convert import bytes_to_tec_current, offset_bytes_to_signed_twos_complement_int, slope_bytes_to_unsigned_decimal
 from modules.core.convert import temperature_bytes_to_signed_twos_complement_decimal
@@ -99,6 +103,12 @@ class TestConvertMethods(unittest.TestCase):
         self.assertAlmostEqual(-1024.0, bytes_to_tec_current(0xD8, 0x00), delta=DELTA)
         self.assertAlmostEqual(-3276.7, bytes_to_tec_current(0x80, 0x01), delta=DELTA)
         self.assertAlmostEqual(-3276.8, bytes_to_tec_current(0x80, 0x00), delta=DELTA)
+
+    def test_ieee_754_to_int(self):
+        
+        DELTA = 0.1
+        self.assertAlmostEqual(Decimal(1.02), ieee754_to_int(0x3F, 0x82, 0x8F, 0x5C), delta=DELTA)
+        self.assertAlmostEqual(Decimal(589302.2), ieee754_to_int(0x49, 0x0F, 0xDF, 0x63), delta=DELTA)
 
 if __name__ == '__main__':
     unittest.main()
