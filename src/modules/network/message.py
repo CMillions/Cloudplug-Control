@@ -3,9 +3,8 @@
 # @brief Message codes for the CloudPlug network protocol.
 #
 # @section file_author Author
-# - Created on 
-#
-#
+# - Created on 08/25/20
+# @section mod_history Modification History
 ##
 
 
@@ -58,7 +57,11 @@ class Message:
         # ! - network byte ordering
         # H - unsigned short, 2 bytes by standard
         # 254s - 254 bytes (254 characters of a string)
-        return struct.pack(f'!H{MESSAGE_BYTES - SIZEOF_H}s', self.code.value, str.encode(self.data_str))
+        return struct.pack(
+            f'!H{MESSAGE_BYTES - SIZEOF_H}s', 
+            self.code.value, 
+            str.encode(self.data_str)
+        )
 
 def bytesToMessage(raw_msg: bytes) -> Message:
     code, data = struct.unpack(f'!H{MESSAGE_BYTES - SIZEOF_H}s', raw_msg)
@@ -73,10 +76,24 @@ class ReadRegisterMessage(Message):
     register_numbers: List[int]
 
     def to_network_message(self) -> bytes:
+        '''! Converts an object of type ReadRegisterMessage into a bytes 
+        object. The format string is dynamic, but packs 3 short integers
+        (H) in network byte order, then the number of registers requested to
+        read bytes (B), then the rest pad bytes (X). The maximum amount
+        of bytes in a packet is 256.
+        
+        @return The class message packed into bytes
+        '''
         num_registers_to_request = len(self.register_numbers)
-        format_str = f"!HHH{num_registers_to_request}B{MESSAGE_BYTES - 3 * SIZEOF_H - num_registers_to_request}x"
+        format_str = f"\!HHH{num_registers_to_request}B\{MESSAGE_BYTES - 3 * SIZEOF_H - num_registers_to_request}x"
 
-        return struct.pack(format_str, self.code.value, self.page_number, num_registers_to_request, *self.register_numbers)
+        return struct.pack(
+            format_str, 
+            self.code.value, 
+            self.page_number, 
+            num_registers_to_request, 
+            *self.register_numbers
+        )
 
 def bytesToReadRegisterMessage(raw_msg: bytes) -> ReadRegisterMessage:
     int_code, page_num, arr_len, *garbage = struct.unpack(f"!HHH{MESSAGE_BYTES - 3 * SIZEOF_H}x", raw_msg)

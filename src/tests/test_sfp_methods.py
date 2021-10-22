@@ -171,6 +171,8 @@ def print_sfp_memory(sfp: SFP):
 
 if __name__ == '__main__':
 
+    unittest.main(verbosity=5)
+
     log_file = './log_file.txt'
     with open(log_file, 'w') as file:
 

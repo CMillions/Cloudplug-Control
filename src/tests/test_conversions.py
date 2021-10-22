@@ -1,6 +1,6 @@
 ##
 # @file test_conversions.py
-# @brief Unit tests for the convert package.
+# @brief Unit tests for the convert module.
 #
 # @section file_author Author
 # - Created on 10/21/21 by Connor DeCamp
@@ -19,7 +19,9 @@ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
 
 
-from modules.core.convert import bytes_to_tec_current, offset_bytes_to_signed_twos_complement_int, slope_bytes_to_unsigned_decimal
+from modules.core.convert import bytes_to_tec_current
+from modules.core.convert import offset_bytes_to_signed_twos_complement_int
+from modules.core.convert import slope_bytes_to_unsigned_decimal
 from modules.core.convert import temperature_bytes_to_signed_twos_complement_decimal
 from modules.core.convert import ieee754_to_int
 
@@ -111,5 +113,5 @@ class TestConvertMethods(unittest.TestCase):
         self.assertAlmostEqual(Decimal(589302.2), ieee754_to_int(0x49, 0x0F, 0xDF, 0x63), delta=DELTA)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=5)
         
