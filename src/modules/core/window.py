@@ -6,6 +6,7 @@
 # - Created on 07/08/2021 by Connor DeCamp
 # @section mod_history Modification History
 # - Modified on 10/19/2021 by Connor DeCamp
+# - Modified on 10/21/2021 by Connor DeCamp
 ##
 
 ##
@@ -18,34 +19,40 @@ from typing import Tuple
 # Third Party Library Imports
 ##
 from PyQt5 import QtCore
-from PyQt5.QtNetwork import QHostAddress
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QListWidget, \
-                            QListWidgetItem, QPlainTextEdit, QTableWidgetItem, QMainWindow
+from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage,\
+                            QListWidgetItem, QPlainTextEdit,\
+                            QTableWidgetItem, QMainWindow
+from sip import voidptr
 
 ##
 # Local Library Imports
 ## 
+
+from modules.core.sfp import SFP
 from modules.core.monitor_dialog import DiagnosticMonitorDialog
 from modules.core.window_autogen import Ui_MainWindow
 from modules.core.memory_map_dialog import MemoryMapDialog
-from modules.network.message import MessageCode, Message, ReadRegisterMessage, bytesToMessage
+
+from modules.network.message import MessageCode, Message
+from modules.network.message import ReadRegisterMessage, bytes_to_message
 from modules.network.network_threads import BroadcastWorker
 from modules.network.sql_connection import SQLConnection
 from modules.network.tcp_server import TCPServer
 from modules.network.utility import DeviceType
-from modules.core.sfp import SFP
 
 class Window(QMainWindow, Ui_MainWindow):
-    '''! Defines the main window of the application.
-    '''    
-    ##
-    # Using more than one space before assignment statements
-    # is bad according to PEP 8.
-    ##
+    '''! Defines the main window of the application.'''    
 
+    ## Signal that is sent to network threads to force socket close
     kill_signal = QtCore.pyqtSignal(int)
+
+    ## Signal used to send network commands across threads
     send_command_signal = QtCore.pyqtSignal(object)
+
+    ## Signal for when a docking station is discovered
     dock_discover_signal = QtCore.pyqtSignal(str)
+
+    ## Signal for when a cloudplug is discovered
     cloudplug_discover_signal = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None):
@@ -71,10 +78,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.kill_signal.connect(self.worker.cleanup)
         self.udp_thread.start()
 
-
-        ###
-        #
-        ###
         #udp_thread = BroadcastThread()
         #udp_thread.device_response.connect(self.handleUdpClientMessage)
         #self.kill_signal.connect(udp_thread.main_window_close_event_handler)
@@ -104,11 +107,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_thread.started.connect(self.tcp_server.open_session)
         self.tcp_thread.start()
 
-        ###
         # This code was commented out in favor of the above code.
         # There is no more need for a class that subclasses the QThread
         # object. Instead, it's moved to a thread that we own.
-        ###
 
         #TODO: Think about removing this commented out code
         # It's a lot to type, so use a temp variable to access the tcp_server of the thread
@@ -130,10 +131,13 @@ class Window(QMainWindow, Ui_MainWindow):
         #self.kill_signal.connect(self.tcp_server_thread.main_window_close_event_handler)
 
         #self.tcp_server_thread.start()
-
-
+        
+        ## The diagnostic monitoring window object
         self.diagnostic_monitor_dialog = DiagnosticMonitorDialog(self)
         self.diagnostic_monitor_dialog.timed_command.connect(self.handle_diagnostic_timer_timeout)
+        
+        # Populate the table when the application opens
+        self._refresh_sfp_table()
 
     def connect_signal_slots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
@@ -150,7 +154,6 @@ class Window(QMainWindow, Ui_MainWindow):
         selected_sfp_id = int(self.tableWidget.item(
             selected_row_in_table, 0
         ).text())
-
 
         mydb = SQLConnection()
         mycursor = mydb.get_cursor()
@@ -178,7 +181,6 @@ class Window(QMainWindow, Ui_MainWindow):
         memory_dialog.show()
 
     def append_row_to_sfp_table(self, values: Tuple) -> None:
-
         ID = 0
         VENDOR_ID = 1
         VENDOR_PART_NUMBER = 2
@@ -195,8 +197,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tableWidget.resizeColumnsToContents()
 
     def cloudplug_reprogram_button_handler(self) -> None:
-        """
-        User presses this button to reprogram the selected cloudplugs with
+        """! User presses this button to reprogram the selected cloudplugs with
         a single selected SFP/SFP+ persona.
         """
 
@@ -225,9 +226,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
     def handle_udp_client_message(self, contents_ip_port_tuple: Tuple):
-        '''
-        Handles the message from a UDP client. 
-        '''
+        '''! Handles the message from a UDP client.'''
         raw_data = contents_ip_port_tuple[0]
         sender_ip = contents_ip_port_tuple[1].toString()
         sender_port = contents_ip_port_tuple[2]
@@ -236,7 +235,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # self.appendToDebugLog(f'Discovered device at {sender_ip}:{sender_port}')        
         # print(raw_data)
 
-        received_message = bytesToMessage(raw_data)
+        received_message = bytes_to_message(raw_data)
 
         self.append_to_debug_log(received_message)
 
@@ -252,8 +251,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.append_to_debug_log(f"Unknown data from {sender_ip}:{sender_port}")
 
     def clone_sfp_memory_button_handler(self):
-        '''
-        Method that handles when the "Clone SFP Memory" button is
+        '''! Method that handles when the "Clone SFP Memory" button is
         clicked.
         '''
 
@@ -280,6 +278,7 @@ class Window(QMainWindow, Ui_MainWindow):
             
 
     def handle_tcp_client_connect(self, data: object):
+        '''! Handles when a TCP client connects.'''
         self.append_to_debug_log(f"Successful TCP connection from {data}")
 
         device_type = data[0]
@@ -291,6 +290,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.listWidget.addItem(QListWidgetItem(device_ip))
 
     def handle_tcp_client_disconnect(self, data: str):
+        '''! Handles when a TCP client disconnects.'''
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
         
@@ -327,7 +327,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tableWidget.setRowCount(0)
 
         for data_tuple in cursor:
-            print(data_tuple)
+            self.append_to_debug_log(f'Adding entry to SFP table: {data_tuple}')
             self.append_row_to_sfp_table(data_tuple)
 
         db.close()
@@ -382,6 +382,12 @@ class Window(QMainWindow, Ui_MainWindow):
             self.diagnostic_monitor_dialog.show()
 
     def handle_init_diagnostic_a0(self, cmd: ReadRegisterMessage):
+        '''! Handles updating identifying information from the SFP inserted
+        in the docking station. This is so the user knows what SFP
+        is being monitored.
+
+        @param cmd The ReadRegisterMessage object received from the TCP Server.
+        '''
         sfp_ptr = self.diagnostic_monitor_dialog.associated_sfp
 
         i = 0
@@ -411,6 +417,12 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
     def handle_init_diagnostic_a2(self, cmd: ReadRegisterMessage):
+        '''! Handles the diagnostic information from page 0xA2 of the
+        SFP memory map. This page contains the diagnostic alarms/warnings
+        and calibration constants.
+
+        @param cmd The ReadRegisterMessage that was received from the TCP Server.
+        '''
         m = self.diagnostic_monitor_dialog
         sfp_ptr = m.associated_sfp
 
@@ -424,6 +436,9 @@ class Window(QMainWindow, Ui_MainWindow):
         self.diagnostic_monitor_dialog.update_real_time_tab()
 
     def handle_diagnostic_timer_timeout(self):
+        '''! Handles the diagnostic monitoring timeout. Sends a message to the
+        respective docking station that requests the updated A/D values.
+        '''
         # Send a refresh real-time diagnostics message
         code = MessageCode.REAL_TIME_REFRESH
         page_num = 0x51
@@ -434,7 +449,12 @@ class Window(QMainWindow, Ui_MainWindow):
         self.send_command_signal.emit((self.diagnostic_monitor_dialog.dock_ip, command))
 
     def handle_real_time_refresh(self, cmd: ReadRegisterMessage):
+        '''! Handles the refreshing of diagnostic data from the
+        a docking station.
 
+        @param cmd The ReadRegisterMessage object that contains the updated
+        A/D values.
+        '''
         # Expecting data from registers [96, 109] in page 0x51 (aka 0xA2)
         sfp_ptr = self.diagnostic_monitor_dialog.associated_sfp
         sfp_ptr.force_calibration_check()
@@ -445,13 +465,20 @@ class Window(QMainWindow, Ui_MainWindow):
         self.diagnostic_monitor_dialog.update_real_time_tab()
 
     def handle_remote_io_error(self, cmd: Message):
-        print("Trying to close diag window")
+        '''! Handles when a device responds with 'Remote IO Error'.
+        @param cmd The message object that was sent
+        '''
+        self.append_to_debug_log(cmd)
         self.diagnostic_monitor_dialog.close()
 
     ##
     # Utility functions
     ##
-    def handle_close_event(self, event):
+    def closeEvent(self, event):
+        '''! Handles the closeEvent when the user presses the red X.
+        This is an reimplemented PyQT function to modify the behavior
+        of the closeEvent slot.
+        '''
         print("Closing the window")
 
         self.kill_signal.emit(-1)
@@ -460,10 +487,17 @@ class Window(QMainWindow, Ui_MainWindow):
         event.accept()
 
     def append_to_debug_log(self, text: str):
+        '''! Allows timestamped debug messages to be added to a text log.
+
+            @param text The text to be added to the debug log.
+        '''
         
+        # Select the text-edit widget on the debug tab
         text_edit = self.logTab.findChild(QPlainTextEdit, 'plainTextEdit')
 
+        # If we find it
         if text_edit:
+            # Format the local time into HH:MM:SS and append to the debug log
             formatted_time = time.strftime('%H:%M:%S', time.localtime())
             text_edit.appendPlainText(f'[{formatted_time}]: {text}')
 

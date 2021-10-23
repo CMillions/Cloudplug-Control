@@ -13,7 +13,7 @@
 
 from decimal import *
 
-def ieee754_to_int(b3: int, b2: int, b1: int, b0: int) -> int:
+def ieee754_to_decimal(b3: int, b2: int, b1: int, b0: int) -> Decimal:
     '''! Takes 4 bytes in IEEE 754 floating point format and converts it into a floating point
     number as per the IEEE 754 specification. The MSB (bit 31) is the sign bit,
     bits 2-9 are the exponent, and the rest belong to the mantissa.
@@ -58,14 +58,11 @@ def ieee754_to_int(b3: int, b2: int, b1: int, b0: int) -> int:
     return result
 
 def slope_bytes_to_unsigned_decimal(b1: int, b0: int) -> Decimal:
-    '''
-    Takes in 2 bytes, formatted as b1.b0 and returns the
-    unsigned decimal equivalent. For example:
-        b1 = 1111 1111
-        b0 = 1111 1111
+    '''!Takes in 2 bytes, formatted as b1.b0 and returns the
+    unsigned decimal equivalent.
 
-    Number it represents is 1111 1111.1111 1111
-    which is 255 + (255) / 256
+    @param b1 Most significant byte
+    @param b0 Least significant byte
     '''
     b1 &= 0xFF
     b0 &= 0xFF
@@ -91,7 +88,7 @@ def temperature_bytes_to_signed_twos_complement_decimal(b1: int, b0: int) -> flo
     signed two's complement decimal equivalent.
 
     @param b1 Most significant byte
-    @param b2 Least significant byte
+    @param b0 Least significant byte
     
     @return A float in the range [-127.996, +127.996]
     '''
@@ -133,7 +130,7 @@ def offset_bytes_to_signed_twos_complement_int(b1: int, b0: int) -> int:
     converts them to an integer.
 
     @param b1 Most significant byte
-    @param b2 Least significant byte
+    @param b0 Least significant byte
 
     @return An integer in the range [-32768, +32767]
     '''

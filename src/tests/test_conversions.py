@@ -23,7 +23,7 @@ from modules.core.convert import bytes_to_tec_current
 from modules.core.convert import offset_bytes_to_signed_twos_complement_int
 from modules.core.convert import slope_bytes_to_unsigned_decimal
 from modules.core.convert import temperature_bytes_to_signed_twos_complement_decimal
-from modules.core.convert import ieee754_to_int
+from modules.core.convert import ieee754_to_decimal
 
 class TestConvertMethods(unittest.TestCase):
     '''! Defines the unit tests for the convert package.'''
@@ -109,8 +109,8 @@ class TestConvertMethods(unittest.TestCase):
     def test_ieee_754_to_int(self):
         
         DELTA = 0.1
-        self.assertAlmostEqual(Decimal(1.02), ieee754_to_int(0x3F, 0x82, 0x8F, 0x5C), delta=DELTA)
-        self.assertAlmostEqual(Decimal(589302.2), ieee754_to_int(0x49, 0x0F, 0xDF, 0x63), delta=DELTA)
+        self.assertAlmostEqual(Decimal(1.02), ieee754_to_decimal(0x3F, 0x82, 0x8F, 0x5C), delta=DELTA)
+        self.assertAlmostEqual(Decimal(589302.2), ieee754_to_decimal(0x49, 0x0F, 0xDF, 0x63), delta=DELTA)
 
 if __name__ == '__main__':
     unittest.main(verbosity=5)

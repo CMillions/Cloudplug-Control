@@ -132,6 +132,9 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
     def start_timer(self):
         self.timer.start(self.MESSAGE_INTERVAL_MSEC)
 
-    def handle_close_event(self, event):
+    ##
+    # PyQT overloaded function
+    ##
+    def closeEvent(self, event):
         self.timer.stop()
         event.accept()

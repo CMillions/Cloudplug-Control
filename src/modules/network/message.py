@@ -7,20 +7,16 @@
 # @section mod_history Modification History
 ##
 
-
-from dataclasses import dataclass
+##
+# Standard Library Imports
+##
 import struct
+from dataclasses import dataclass
 from enum import Enum
 from typing import List
 
-##
-# @brief Codes for updating the user interface. Mostly used
-#        for the diagnostic monitoring window since data has
-#        to be exchanged over the network.
-#
-##
-
 class MessageCode(Enum):
+    '''! Message codes for CloudPlug network protocol.'''
     DISCOVER = 0
 
     # Docking Station Codes
@@ -43,16 +39,23 @@ class MessageCode(Enum):
     # Cloudplug Codes
     CLOUDPLUG_DISCOVER_ACK = 200
 
-
+## The number of bytes in a CloudPlug network protocol message
 MESSAGE_BYTES = 256
+
+## The number of bytes for the H formatter from the struct package
 SIZEOF_H = 2
 
 @dataclass
 class Message:
+    '''! Defines a way to represent CloudPlug protocol packets.'''
     code: MessageCode
     data_str: str
 
-    def to_network_message(self) -> bytes:
+    def to_bytes(self) -> bytes:
+        '''! Converts a Message object into bytes using the struct package.
+
+        @return The members of the Message object represented as 256 bytes
+        '''
         # Pack the message into 256 bytes in network byte ordering
         # ! - network byte ordering
         # H - unsigned short, 2 bytes by standard
@@ -63,7 +66,7 @@ class Message:
             str.encode(self.data_str)
         )
 
-def bytesToMessage(raw_msg: bytes) -> Message:
+def bytes_to_message(raw_msg: bytes) -> Message:
     code, data = struct.unpack(f'!H{MESSAGE_BYTES - SIZEOF_H}s', raw_msg)
     code = MessageCode(code)
     sent_cmd = Message(code, str(data, 'utf-8').strip('\x00'))
@@ -75,7 +78,7 @@ class ReadRegisterMessage(Message):
     page_number:      int
     register_numbers: List[int]
 
-    def to_network_message(self) -> bytes:
+    def to_bytes(self) -> bytes:
         '''! Converts an object of type ReadRegisterMessage into a bytes 
         object. The format string is dynamic, but packs 3 short integers
         (H) in network byte order, then the number of registers requested to
@@ -84,18 +87,25 @@ class ReadRegisterMessage(Message):
         
         @return The class message packed into bytes
         '''
-        num_registers_to_request = len(self.register_numbers)
-        format_str = f"\!HHH{num_registers_to_request}B\{MESSAGE_BYTES - 3 * SIZEOF_H - num_registers_to_request}x"
+        num_of_registers = len(self.register_numbers)
+        num_of_pad_bytes = MESSAGE_BYTES - 3 * SIZEOF_H - num_of_registers
+        format_str = f"!HHH{num_of_registers}B{num_of_pad_bytes}x"
 
         return struct.pack(
             format_str, 
             self.code.value, 
             self.page_number, 
-            num_registers_to_request, 
+            num_of_registers, 
             *self.register_numbers
         )
 
-def bytesToReadRegisterMessage(raw_msg: bytes) -> ReadRegisterMessage:
+def bytes_to_read_register_message(raw_msg: bytes) -> ReadRegisterMessage:
+    '''! Converts a bytes object to a ReadRegisterMessage object.
+
+        Unpacks the message code, accessed page number, and the length of the
+        data received. With this information, the correct number of bytes can
+        be unpacked into the data list.
+    '''
     int_code, page_num, arr_len, *garbage = struct.unpack(f"!HHH{MESSAGE_BYTES - 3 * SIZEOF_H}x", raw_msg)
     format_str = f"!HHH{arr_len}B{MESSAGE_BYTES - 3 * SIZEOF_H - arr_len}x"
     int_code, page_num, arr_len, *data = struct.unpack(format_str, raw_msg)

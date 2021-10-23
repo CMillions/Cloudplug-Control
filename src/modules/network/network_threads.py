@@ -65,7 +65,7 @@ class BroadcastWorker(QObject):
         '''
         msg = Message(MessageCode.DISCOVER, "DISCOVER")
 
-        self._sock.writeDatagram(QByteArray(msg.to_network_message()), self._broadcast_address, self._port)
+        self._sock.writeDatagram(QByteArray(msg.to_bytes()), self._broadcast_address, self._port)
         while self._sock.hasPendingDatagrams():
             msg_tuple = self._sock.readDatagram(MESSAGE_BYTES)
 
@@ -137,7 +137,7 @@ class BroadcastThread(QThread):
         udp_socket.bind(bind_addr, port)
 
         discover_msg = Message(MessageCode.DISCOVER, 'DISCOVER')
-        raw_bytes = discover_msg.to_network_message()
+        raw_bytes = discover_msg.to_bytes()
 
         byte_array = QByteArray()
         byte_array.append(raw_bytes)

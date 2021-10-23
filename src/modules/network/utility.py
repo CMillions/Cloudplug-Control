@@ -1,6 +1,5 @@
 ## 
 # @file utility.py
-# @package utility
 # @brief Provides simple network utility functions.
 #
 # @section file_author Author
@@ -9,7 +8,7 @@
 # - Modified on 10/21/21 by Connor DeCamp
 ##
 
-from PyQt5.QtNetwork import QNetworkInterface, QAbstractSocket, QTcpSocket
+from PyQt5.QtNetwork import QNetworkInterface, QAbstractSocket
 from enum import Enum
 
 class DeviceType(Enum):

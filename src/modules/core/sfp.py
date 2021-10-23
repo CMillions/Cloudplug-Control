@@ -1089,7 +1089,7 @@ class SFP:
         power. Bit 7 of byte 56 is MSB. Bit 0 of byte 59 is LSB. Rx_PWR(4)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[56], self.page_a2[57], 
             self.page_a2[58], self.page_a2[59]
         )
@@ -1100,7 +1100,7 @@ class SFP:
         power. Bit 7 of byte 60 is MSB. Bit 0 of byte 63 is LSB. Rx_PWR(3)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[60], self.page_a2[61],
             self.page_a2[62], self.page_a2[63]
         )
@@ -1111,7 +1111,7 @@ class SFP:
         power. Bit 7 of byte 64 is MSB. Bit 0 of byte 67 is LSB. Rx_PWR(2)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[64], self.page_a2[65],
             self.page_a2[66], self.page_a2[67]
         )
@@ -1123,7 +1123,7 @@ class SFP:
         should be set to zero for 'internally calibrated' devices.
 
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[68], self.page_a2[69],
             self.page_a2[70], self.page_a2[71]
         )
@@ -1134,7 +1134,7 @@ class SFP:
         power. Bit 7 of byte 72 is MSB. Bit 0 of byte 75 is LSB. Rx_PWR(0)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[72], self.page_a2[73],
             self.page_a2[74], self.page_a2[75]
         )
@@ -1182,7 +1182,7 @@ class SFP:
         current. Bit 7 of byte 78 is MSB, bit 0 of byte 79 is LSB.
         Tx_I(Offset) should be set to zero for "internally calibrated' devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[78], self.page_a2[79])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[78], self.page_a2[79])
 
     def get_tx_pwr_slope(self) -> int:
         '''
@@ -1198,7 +1198,7 @@ class SFP:
         coupled output power. Bit 7 of byte 82 is MSB, bit 0 of byte 83 is LSB.
         Tx_PWR(Offset) should be set to zero for "internally calibrated" devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[82], self.page_a2[83])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[82], self.page_a2[83])
     
     def get_temp_slope(self) -> int:
         '''
@@ -1214,7 +1214,7 @@ class SFP:
         Bit 7 of byte 86 is MSB, bit 0 of byte 87 is LSB. T(Offset) should be set to
         0 for "internally calibrated" devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[86], self.page_a2[87])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[86], self.page_a2[87])
 
     def get_voltage_slope(self) -> int:
         '''
@@ -1230,7 +1230,7 @@ class SFP:
         Bit 7 of byte 90 is MSB, bit 0 of byte 91 is LSB. V(Offset) should be set to
         0 for "internally calibrated" devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[90], self.page_a2[91])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[90], self.page_a2[91])
 
     def get_reserved_a2_bytes(self) -> int:
         return f'{self.page_a2[92:94 + 1]}'

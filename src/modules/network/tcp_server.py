@@ -1,3 +1,12 @@
+##
+# @file tcp_server.py
+# @brief Defines the TCPServer class.
+#
+# @section file_author Author
+# - Created on 08/16/21 by Connor DeCamp
+#
+##
+
 from typing import Union
 import struct, time
 
@@ -186,9 +195,9 @@ class TCPServer(QObject):
         read_register_acks = [MessageCode.DIAGNOSTIC_INIT_A0_ACK, MessageCode.DIAGNOSTIC_INIT_A2_ACK, MessageCode.REAL_TIME_REFRESH_ACK]
 
         if MessageCode(code) in read_register_acks:
-            sent_cmd = bytesToReadRegisterMessage(raw_msg)
+            sent_cmd = bytes_to_read_register_message(raw_msg)
         else:
-            sent_cmd = bytesToMessage(raw_msg)
+            sent_cmd = bytes_to_message(raw_msg)
 
         #print(sent_cmd)
         #print(f'Client at {client_ip} sent a message: {sent_cmd}')
@@ -239,7 +248,7 @@ class TCPServer(QObject):
             self.log_signal.emit(f"ERROR: Tried to send data to {destination_ip} which is an unknown destination.")
             return
 
-        raw_command = command.to_network_message()
+        raw_command = command.to_bytes()
         
         qba = QByteArray(raw_command)
         destination_socket.write(qba)
@@ -250,11 +259,13 @@ class TCPServer(QObject):
             if self.connected_dock_dict[key] is not None:
                 sock: QTcpSocket = self.connected_dock_dict[key]
                 sock.close()
+                self.connected_dock_dict.pop(key)
 
         for key in self.connected_cloudplug_dict:
             if self.connected_cloudplug_dict[key] is not None:
                 sock: QTcpSocket = self.connected_cloudplug_dict[key]
                 sock.close()
+                self.connected_cloudplug_dict.pop(key)
 
 
 
