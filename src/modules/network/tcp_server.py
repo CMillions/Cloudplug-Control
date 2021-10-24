@@ -10,7 +10,7 @@
 from typing import Union
 import struct, time
 
-from PyQt5.QtCore import QByteArray, QObject, pyqtSignal
+from PyQt5.QtCore import QByteArray, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
 
 from modules.network.message import *
@@ -253,8 +253,11 @@ class TCPServer(QObject):
         qba = QByteArray(raw_command)
         destination_socket.write(qba)
 
+    @pyqtSlot()
     def _close_all_connections(self):
-        
+        '''! Closes all socket connections on the TCP
+        server. Meant to be a pyqt slot.
+        '''
         for key in self.connected_dock_dict:
             if self.connected_dock_dict[key] is not None:
                 sock: QTcpSocket = self.connected_dock_dict[key]

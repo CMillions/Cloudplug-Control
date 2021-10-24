@@ -341,7 +341,7 @@ class Window(QMainWindow, Ui_MainWindow):
             to see the diagnostics of the SFP module.
         '''
         selected_items = self.dockingStationList.selectedItems()
-
+        
         if len(selected_items) != 1:
             error_msg = QErrorMessage()
             if len(selected_items) > 1:

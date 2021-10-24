@@ -115,7 +115,34 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
 
     def update_real_time_tab(self):
         sfp = self.associated_sfp
-        self.temperatureLineEdit.setText(f'{sfp.get_temperature():.3f}')
+        # Update the color of the text based on the value
+        # compared to thresholds
+        #
+        # Red:         >= alarm high
+        # Orange:      >= warning high
+        # Green/black: > warning low
+        # light blue:  > alarm low
+        # dark blue:   <= alarm low
+        temperature = sfp.get_temperature()
+        self.temperatureLineEdit.setText(f'{temperature:.3f}')
+
+        RED = 'rgb(255, 0, 0)'
+        YELLOW = 'rgb(237, 212, 0)'
+        BLACK = 'rgb(0, 0, 0)'
+        LIGHT_BLUE = 'rgb(114, 159, 207)'
+        BLUE = 'rgb(0, 0, 255)'
+
+        if temperature >= sfp.get_temp_high_alarm():
+            self.temperatureLineEdit.setStyleSheet(f'color: {RED}')
+        elif temperature >= sfp.get_temp_high_warning():
+            self.temperatureLineEdit.setStyleSheet(f'color: {YELLOW}')
+        elif temperature > sfp.get_temp_low_warning():
+            self.temperatureLineEdit.setStyleSheet(f'color: {BLACK}')
+        elif temperature > sfp.get_temp_low_alarm():
+            self.temperatureLineEdit.setStyleSheet(f'color: {LIGHT_BLUE}')
+        else:
+            self.temperatureLineEdit.setStyleSheet(f'color: {BLUE}')
+
         self.vccLineEdit.setText(f'{sfp.get_vcc() / Decimal(10000.0):.3f}')
         self.txBiasCurrentLineEdit.setText(f'{sfp.get_tx_bias_current() * Decimal(2 * 10**-3):.3f}')
         self.txPowerLineEdit.setText(f'{sfp.get_tx_power() * Decimal(0.1):.3f}')
