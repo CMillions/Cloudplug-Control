@@ -53,7 +53,7 @@ def ieee754_to_decimal(b3: int, b2: int, b1: int, b0: int) -> Decimal:
         power -= 1
     
 
-    result = pow(-1, int(sign)) * pow(2, exponent) * mantissa_int # (-1)^sign * 2^(exponent) * 1.M
+    result = Decimal(pow(-1, int(sign))) * Decimal(pow(2, exponent)) * mantissa_int # (-1)^sign * 2^(exponent) * 1.M
     
     return result
 

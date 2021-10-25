@@ -29,6 +29,7 @@ class TestConvertMethods(unittest.TestCase):
     '''! Defines the unit tests for the convert package.'''
 
     def test_slope_bytes_to_unsigned_decimal(self):
+        '''! Tests the method slope_bytes_to_unsigned_decimal()'''
         DELTA = 0.004
 
         self.assertEqual(0.0, slope_bytes_to_unsigned_decimal(0x00, 0x00))
@@ -42,6 +43,7 @@ class TestConvertMethods(unittest.TestCase):
 
 
     def test_temperature_bytes_to_signed_twos_complement_decimal(self):
+        '''! Tests the method temperature_bytes_to_signed_twos_complement_decimal()'''
 
         # The numbers here are expected to range from [-127.996, +127.996]
         # It is calculated using two 1-byte words, b1 and b0
@@ -76,6 +78,7 @@ class TestConvertMethods(unittest.TestCase):
         self.assertAlmostEqual(-127.996, temperature_bytes_to_signed_twos_complement_decimal(0x80, 0x01), delta=DELTA)
 
     def test_offset_bytes_to_signed_twos_complement_int(self):
+        '''! Tests the method offset_bytes_to_signed_twos_complement_int()'''
 
         self.assertEqual(32767, offset_bytes_to_signed_twos_complement_int(0x7F, 0xFF))
         self.assertEqual(3, offset_bytes_to_signed_twos_complement_int(0x00, 0x03))
@@ -88,6 +91,7 @@ class TestConvertMethods(unittest.TestCase):
         self.assertEqual(-32768, offset_bytes_to_signed_twos_complement_int(0x80, 0x00))
 
     def test_bytes_to_tec_current(self):
+        '''! Tests the method bytes_to_tec_current()'''
 
         DELTA = 0.1
 
@@ -106,12 +110,16 @@ class TestConvertMethods(unittest.TestCase):
         self.assertAlmostEqual(-3276.7, bytes_to_tec_current(0x80, 0x01), delta=DELTA)
         self.assertAlmostEqual(-3276.8, bytes_to_tec_current(0x80, 0x00), delta=DELTA)
 
-    def test_ieee_754_to_int(self):
+    def test_ieee_754_to_decimal(self):
+        '''! Tests the method ieee_754_to_decimal()'''
         
         DELTA = 0.1
         self.assertAlmostEqual(Decimal(1.02), ieee754_to_decimal(0x3F, 0x82, 0x8F, 0x5C), delta=DELTA)
         self.assertAlmostEqual(Decimal(589302.2), ieee754_to_decimal(0x49, 0x0F, 0xDF, 0x63), delta=DELTA)
+        self.assertAlmostEqual(Decimal(-2004.12304), ieee754_to_decimal(0xC4, 0xFa, 0x83, 0xF0), delta=DELTA)
+        self.assertAlmostEqual(Decimal(-0.000001), ieee754_to_decimal(0xB5, 0x86, 0x37, 0xBD), delta=DELTA)
+        self.assertAlmostEqual(Decimal(44444.44444), ieee754_to_decimal(0x47, 0x2D, 0x9C, 0x72), delta=DELTA)
 
 if __name__ == '__main__':
-    unittest.main(verbosity=5)
+    unittest.main()
         

@@ -53,18 +53,20 @@ class SQLConnection:
         
         try:
             #print(f'{db_host = }\t{db_user = }\t{db_pass = }')
+            TIMEOUT_SEC = 5
+            print(f"Trying to connect to database with timeout: {TIMEOUT_SEC} seconds")
             self.connection = mysql.connector.connect(
                 host=db_host,
                 user=db_user,
                 password=db_pass,
                 database=db_name,
-                connection_timeout=15
+                connection_timeout=TIMEOUT_SEC
             )
 
             self.cursor = self.connection.cursor()
 
         except Exception as ex:
-            print('Error')
+            print('Error connecting to SFP database')
             print(ex)
             self.connection = None
             self.cursor = None

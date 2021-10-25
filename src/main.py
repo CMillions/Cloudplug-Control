@@ -13,6 +13,7 @@
 # - Modified on 08/03/2021
 # - Modified on 10/19/2021
 # - Modified on 10/21/2021 by Connor DeCamp
+# - Modified on 10/24/2021 by Connor DeCamp
 ##
 
 ##
@@ -25,7 +26,9 @@ import sys
 ##
 from PyQt5.QtWidgets import QApplication
 
+##
 # User defined imports
+##
 from modules.core.window import Window
 
 
@@ -33,10 +36,11 @@ def main():
 
     # Create the Qt Application and an instance of the window class
     app = QApplication(sys.argv)
-    main_window = Window()
 
+    main_window = Window()
     main_window.setWindowTitle('CloudPlug Control')
     main_window.show()
+
     sys.exit(app.exec_())
 
     

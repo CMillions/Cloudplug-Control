@@ -31,8 +31,7 @@ class BroadcastWorker(QObject):
     # This signal is emitted when a UDP response is received
     device_response = pyqtSignal(object)
 
-    # The amount of time in msec before the timer times out
-    __TIMEOUT_MSEC = 1000
+    
 
     def on_thread_start(self):
         '''! Called when the thread starts.
@@ -50,10 +49,12 @@ class BroadcastWorker(QObject):
 
         self._sock.bind(self._bind_address, self._port)
 
+        # The amount of time in msec before the timer times out
+        self._TIMEOUT_MSEC = 1000
 
         self._timer = QTimer()
         self._timer.timeout.connect(self.do_broadcast)
-        self._timer.start(self.__TIMEOUT_MSEC)
+        self._timer.start(self._TIMEOUT_MSEC)
         
 
     def do_broadcast(self):
@@ -78,7 +79,7 @@ class BroadcastWorker(QObject):
                 self.device_response.emit(msg_tuple)
 
         # Restart the timer to infinitely do broadcast messages
-        self._timer.start(self.__TIMEOUT_MSEC)
+        self._timer.start(self._TIMEOUT_MSEC)
 
     def cleanup(self):
         '''! This thread cleans up the worker object.

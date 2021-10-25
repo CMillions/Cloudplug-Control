@@ -13,7 +13,8 @@
 ##
 # Third Party Library Imports
 ##
-from PyQt5.QtWidgets import QDialog
+from typing import Union
+from PyQt5.QtWidgets import QDialog, QLineEdit
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 
 ##
@@ -24,12 +25,16 @@ from modules.core.sfp import *
 
 class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
 
+    ## Signal emitted when internal timer times out
     timed_command = pyqtSignal()
 
-    MESSAGE_INTERVAL_MSEC: int = 1000
+    ## Messaging interval in milliseconds
+    MESSAGE_INTERVAL_MSEC = 1000
 
+    ## SFP object to monitor diagnostics of
     associated_sfp = SFP([0]*256, [0]*256)
-
+    
+    ## IP address of associated docking station
     dock_ip = ""
 
     def __init__(self, parent=None):
@@ -63,11 +68,9 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         for line_edit in line_edits:
             line_edit.setReadOnly(True)
 
-
-
         self.timer = QTimer()
         self.timer.timeout.connect(self._emit_command_restart_timer)
-
+        
     def update_alarm_warning_tab(self):
         
         sfp_ptr = self.associated_sfp
@@ -125,38 +128,109 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         # dark blue:   <= alarm low
         temperature = sfp.get_temperature()
         self.temperatureLineEdit.setText(f'{temperature:.3f}')
+        self._update_color_indicator(
+            float(self.temperatureLineEdit.text()), 
+            float(self.tempHighAlarmLineEdit.text()),
+            float(self.tempHighWarnLineEdit.text()),
+            float(self.tempLowWarnLineEdit.text()),
+            float(self.tempLowAlarmLineEdit.text()),
+            self.temperatureLineEdit
+        )
 
+        self.vccLineEdit.setText(f'{sfp.get_vcc() / Decimal(10000.0):.3f}')
+        self._update_color_indicator(
+            float(self.vccLineEdit.text()),
+            float(self.vccHighAlarmLineEdit.text()),
+            float(self.vccHighWarnLineEdit.text()),
+            float(self.vccLowWarnLineEdit.text()),
+            float(self.vccLowAlarmLineEdit.text()),
+            self.vccLineEdit
+        )
+
+        self.txBiasCurrentLineEdit.setText(f'{sfp.get_tx_bias_current() * Decimal(2 * 10**-3):.3f}')
+        self._update_color_indicator(
+            float(self.txBiasCurrentLineEdit.text()),
+            float(self.txBiasHighAlarmLineEdit.text()),
+            float(self.txBiasHighWarnLineEdit.text()),
+            float(self.txBiasLowWarnLineEdit.text()),
+            float(self.txBiasLowAlarmLineEdit.text()),
+            self.txBiasCurrentLineEdit
+        )
+
+        self.txPowerLineEdit.setText(f'{sfp.get_tx_power() * Decimal(0.1):.3f}')
+        self._update_color_indicator(
+            float(self.txPowerLineEdit.text()),
+            float(self.txPowerHighAlarmLineEdit.text()),
+            float(self.txPowerHighWarnLineEdit.text()),
+            float(self.txPowerLowWarnLineEdit.text()),
+            float(self.txPowerLowAlarmLineEdit.text()),
+            self.txPowerLineEdit
+        )
+
+        self.rxPowerLineEdit.setText(f'{sfp.calculate_rx_power_uw() * Decimal(0.1):.3f}')
+        self._update_color_indicator(
+            float(self.rxPowerLineEdit.text()),
+            float(self.rxPowerHighAlarmLineEdit.text()),
+            float(self.rxPowerHighWarnLineEdit.text()),
+            float(self.rxPowerLowWarnLineEdit.text()),
+            float(self.rxPowerLowAlarmLineEdit.text())
+        )
+
+        #TODO - provide color coding for optional parameters
+        if sfp.calibration_type == SFP.CalibrationType.INTERNAL:
+            self.laserTempLineEdit.setText(f'{sfp.get_laser_temp_or_wavelength():.3f}')
+            self.tecCurrentLineEdit.setText(f'{sfp.get_tec_current():.3f}')
+        else:
+            self.laserTempLineEdit.setText('Not supported')
+            self.tecCurrentLineEdit.setText('Not supported')
+
+        
+
+        
+
+    def _update_color_indicator(self, diagnostic_value: Union[Decimal, float], 
+        alarm_high: Union[Decimal, float], warning_high: Union[Decimal, float], 
+        warning_low: Union[Decimal, float], alarm_low: Union[Decimal, float], 
+        line_edit: QLineEdit
+    ):
+        '''! Updates the color of real-time diagnostic values to visually indicate
+        where they are compared to alarm and warning thresholds. Text color is
+        RED for alarm high, YELLOW for warning high, BLACK for normal, LIGHT BLUE
+        for warning low, and BLUE for alarm low.
+
+        @param diagnostic_value The diagnostic value to be interpreted
+        @param alarm_high The alarm high threshold
+        @param warning_high The warning high threshold
+        @param warning_low The warning low threshold
+        @param alarm_low The alarm low threshold
+        @param line_edit The QLineEdit object to be updated
+        '''
+
+        # Colors in qtStyleSheet format
         RED = 'rgb(255, 0, 0)'
         YELLOW = 'rgb(237, 212, 0)'
         BLACK = 'rgb(0, 0, 0)'
         LIGHT_BLUE = 'rgb(114, 159, 207)'
         BLUE = 'rgb(0, 0, 255)'
 
-        if temperature >= sfp.get_temp_high_alarm():
-            self.temperatureLineEdit.setStyleSheet(f'color: {RED}')
-        elif temperature >= sfp.get_temp_high_warning():
-            self.temperatureLineEdit.setStyleSheet(f'color: {YELLOW}')
-        elif temperature > sfp.get_temp_low_warning():
-            self.temperatureLineEdit.setStyleSheet(f'color: {BLACK}')
-        elif temperature > sfp.get_temp_low_alarm():
-            self.temperatureLineEdit.setStyleSheet(f'color: {LIGHT_BLUE}')
+        if diagnostic_value >= alarm_high:
+            line_edit.setStyleSheet(f'color: {RED}')
+        elif diagnostic_value >= warning_high:
+            line_edit.setStyleSheet(f'color: {YELLOW}')
+        elif diagnostic_value > warning_low:
+            line_edit.setStyleSheet(f'color: {BLACK}')
+        elif diagnostic_value > alarm_low:
+            line_edit.setStyleSheet(f'color: {LIGHT_BLUE}')
         else:
-            self.temperatureLineEdit.setStyleSheet(f'color: {BLUE}')
-
-        self.vccLineEdit.setText(f'{sfp.get_vcc() / Decimal(10000.0):.3f}')
-        self.txBiasCurrentLineEdit.setText(f'{sfp.get_tx_bias_current() * Decimal(2 * 10**-3):.3f}')
-        self.txPowerLineEdit.setText(f'{sfp.get_tx_power() * Decimal(0.1):.3f}')
-        self.rxPowerLineEdit.setText(f'{sfp.calculate_rx_power_uw() * Decimal(0.1):.3f}')
-
-        self.laserTempLineEdit.setText(f'{sfp.get_laser_temp_or_wavelength():.3f}')
-        self.tecCurrentLineEdit.setText(f'{sfp.get_tec_current():.3f}')
+            line_edit.setStyleSheet(f'color: {BLUE}')
 
     def _emit_command_restart_timer(self):
+        '''! Emits the timed_command signal and restarts the timer.'''
         self.timed_command.emit()
-        print(f'{self.associated_sfp.page_a2[96:98]}')
         self.start_timer()
 
     def start_timer(self):
+        '''! Starts the window message timer.'''
         self.timer.start(self.MESSAGE_INTERVAL_MSEC)
 
     ##
