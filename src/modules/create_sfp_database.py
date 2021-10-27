@@ -89,36 +89,37 @@ def main():
     
     mydb = mysql.connector.connect(
         host="localhost",
-        user="connord",
-        password="cloudplug",
+        user="connor",
+        password="cloudplug!@#@!",
         database="sfp_info"
     )
 
     mycursor = mydb.cursor()
 
-    create_table(mycursor)
-    create_page_table(mycursor, 'page_a0')
+    #create_table(mycursor)
+    #create_page_table(mycursor, 'page_a0')
+    create_page_table(mycursor, 'page_a2')
 
     #T= Testing insertion to database
-    sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
-    vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
-    mycursor.execute(sql, vals)
-    insert_sfp_data_to_table(mycursor, "sfp", list(vals))
+    #sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
+    #vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
+    #mycursor.execute(sql, vals)
+    #insert_sfp_data_to_table(mycursor, "sfp", list(vals))
     mydb.commit()
-    print(mycursor.rowcount, "record inserted")
+    #print(mycursor.rowcount, "record inserted")
 
-    print("\n\nReading all entries from sfp table")
-    sql = "SELECT * from sfp"
-    mycursor.execute(sql)
+    #print("\n\nReading all entries from sfp table")
+    #sql = "SELECT * from sfp"
+    #mycursor.execute(sql)
 
-    myresult = mycursor.fetchall()
+    #myresult = mycursor.fetchall()
 
-    for x in myresult:
-        print(x)
+    #for x in myresult:
+    #    print(x)
 
-    print('\n\nReading sfp memory')
-    memory_map = read_sfp_memory_map('sfp3.bin')
-    print(f'Length is {len(memory_map)}')
+    #print('\n\nReading sfp memory')
+    #memory_map = read_sfp_memory_map('sfp3.bin')
+    #print(f'Length is {len(memory_map)}')
 
     '''
     memory_map2 = []

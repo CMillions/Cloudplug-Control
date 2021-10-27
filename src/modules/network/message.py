@@ -5,15 +5,16 @@
 # @section file_author Author
 # - Created on 08/25/20
 # @section mod_history Modification History
+# - Modified on 10/27/21 by Connor DeCamp
 ##
 
 ##
 # Standard Library Imports
 ##
 import struct
-from dataclasses import dataclass
 from enum import Enum
 from typing import List
+from dataclasses import dataclass
 
 class MessageCode(Enum):
     '''! Message codes for CloudPlug network protocol.'''

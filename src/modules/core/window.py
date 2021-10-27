@@ -19,9 +19,10 @@ from typing import Tuple
 # Third Party Library Imports
 ##
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QAbstractScrollArea, QApplication, QErrorMessage,\
+from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage,\
                             QListWidgetItem, QPlainTextEdit,\
                             QTableWidgetItem, QMainWindow
+from sip import voidptr
 
 ##
 # Local Library Imports
@@ -159,12 +160,21 @@ class Window(QMainWindow, Ui_MainWindow):
         mycursor.execute(f"SELECT * FROM sfp_info.page_a0 WHERE id={selected_sfp_id};")
 
         page_a0 = []
-        page_a2 = [0] * 256
 
         # should only be one result...
         for res in mycursor:
             for i in range(1, len(res)):
                 page_a0.append(res[i])
+
+        mycursor.execute(f"SELECT * FROM sfp_info.page_a2 WHERE id={selected_sfp_id};")
+
+        page_a2 = []
+
+        # should only be one result...
+        for res in mycursor:
+            for i in range(1, len(res)):
+                page_a2.append(res[i])
+
 
         mydb.close()
 
@@ -179,19 +189,29 @@ class Window(QMainWindow, Ui_MainWindow):
         memory_dialog.initialize_table_values(sfp)
         memory_dialog.show()
 
-    def append_row_to_sfp_table(self, values: Tuple) -> None:
+    def append_row_to_sfp_table(self, id_memory_map_tuple: Tuple) -> None:
+        '''! Appends an entry to the SFP table shown on the main screen
+        of the application. The page 0xA0 identifying information is
+        used to determine vendor name, part number, serial number, etc.
+        
+        @param id_memory_map_tuple A tuple consisting of the SFP ID from the database
+        and the information page (0xA0) memory map values.
+        '''
+        self.append_to_debug_log(f'Adding SFP with ID {id_memory_map_tuple[0]} to SFP table')
+
         ID = 0
-        VENDOR_ID = 1
-        VENDOR_PART_NUMBER = 2
-        TRANSCEIVER_TYPE = 3
+        temp_sfp = SFP(id_memory_map_tuple[1:], [0]*256)
 
         rowPosition = self.tableWidget.rowCount()        
         self.tableWidget.insertRow(rowPosition)
 
-        self.tableWidget.setItem(rowPosition, 0, QTableWidgetItem(str(values[ID])))
-        self.tableWidget.setItem(rowPosition, 1, QTableWidgetItem(values[VENDOR_ID]))
-        self.tableWidget.setItem(rowPosition, 2, QTableWidgetItem(values[VENDOR_PART_NUMBER]))
-        self.tableWidget.setItem(rowPosition, 3, QTableWidgetItem(values[TRANSCEIVER_TYPE]))
+        self.tableWidget.setItem(rowPosition, 0, QTableWidgetItem(str(id_memory_map_tuple[ID])))
+        self.tableWidget.setItem(rowPosition, 1, QTableWidgetItem(temp_sfp.get_vendor_name()))
+        self.tableWidget.setItem(rowPosition, 2, QTableWidgetItem(temp_sfp.get_vendor_part_number()))
+        self.tableWidget.setItem(rowPosition, 3, QTableWidgetItem(temp_sfp.get_vendor_serial_number()))
+        self.tableWidget.setItem(rowPosition, 4, QTableWidgetItem(temp_sfp.get_connector_type()))
+        self.tableWidget.setItem(rowPosition, 5, QTableWidgetItem(str(temp_sfp.get_wavelength())))
+
 
         self.tableWidget.resizeColumnsToContents()
 
@@ -225,11 +245,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
     def handle_udp_client_message(self, contents_ip_port_tuple: Tuple):
-        '''! Handles the message from a UDP client.
-        
-        @param contents_ip_port_tuple A tuple that contains the raw message cntents,
-        the sender's IP address, and the port the message was received on.
-        '''
+        '''! Handles the message from a UDP client.'''
         raw_data = contents_ip_port_tuple[0]
         sender_ip = contents_ip_port_tuple[1].toString()
         sender_port = contents_ip_port_tuple[2]
@@ -260,6 +276,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
         selected_item_in_dock_tab = self.dockingStationList.selectedItems()
 
+        # Disable the button until succesful read OR error
+        self.readSfpMemoryButton.setEnabled(False)
         for ip in selected_item_in_dock_tab:
             
             # The IP address is placed as text in the list
@@ -313,14 +331,17 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
     def handle_update_ui_signal(self, code: MessageCode):
-        '''! Handles the update_ui_signal.'''
+        
         if code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
             self.append_to_debug_log("A docking station successfully, cloned SFP memory")
+            self.readSfpMemoryButton.setEnabled(True)
             self._refresh_sfp_table()
+        elif code == MessageCode.CLONE_SFP_MEMORY_ERROR:
+            self.append_to_debug_log("A docking station had an error reading SFP memory.")
+            self.readSfpMemoryButton.setEnabled(True)
 
     def _refresh_sfp_table(self):
-        '''! Refreshes the database view on the main page of the software.'''
-        sql_statement = "SELECT * FROM sfp"
+        sql_statement = "SELECT * FROM page_a0"
         self.append_to_debug_log(f"Executing SQL STATEMENT: {sql_statement}")
         
         db = SQLConnection()
@@ -331,7 +352,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tableWidget.setRowCount(0)
 
         for data_tuple in cursor:
-            self.append_to_debug_log(f'Adding entry to SFP table: {data_tuple}')
             self.append_row_to_sfp_table(data_tuple)
 
         db.close()
@@ -345,9 +365,8 @@ class Window(QMainWindow, Ui_MainWindow):
             to see the diagnostics of the SFP module.
         '''
         selected_items = self.dockingStationList.selectedItems()
-
-        # Show error if the user has selected more or less than
-        # one docking station
+        self.diagnostic_monitor_dialog.show()
+        
         if len(selected_items) != 1:
             error_msg = QErrorMessage()
             if len(selected_items) > 1:
@@ -373,11 +392,9 @@ class Window(QMainWindow, Ui_MainWindow):
             dock_ip = selected_item.text()
             self.diagnostic_monitor_dialog.dock_ip = dock_ip
 
-            page_a0_registers = [
-                20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-                40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
-                92
-            ]
+            page_a0_registers = [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+                                 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55,
+                                 92]
             msg = ReadRegisterMessage(MessageCode.DIAGNOSTIC_INIT_A0, "", 0x50, page_a0_registers)
             self.send_command_signal.emit((dock_ip, msg))
 
@@ -431,11 +448,9 @@ class Window(QMainWindow, Ui_MainWindow):
 
         @param cmd The ReadRegisterMessage that was received from the TCP Server.
         '''
-        # abbreviate long names
         m = self.diagnostic_monitor_dialog
         sfp_ptr = m.associated_sfp
 
-        # Copy into SFP arrays
         for i in range(91 + 1):
             sfp_ptr.page_a2[i] = cmd.register_numbers[i]
 
@@ -490,14 +505,8 @@ class Window(QMainWindow, Ui_MainWindow):
         of the closeEvent slot.
         '''
         print("Closing the window")
-
         self.kill_signal.emit(-1)
-        self.tcp_thread.requestInterruption()
         self.tcp_thread.exit()
-
-        while self.worker._timer.isActive():
-            pass
-        self.udp_thread.requestInterruption()
         self.udp_thread.exit()
         event.accept()
 

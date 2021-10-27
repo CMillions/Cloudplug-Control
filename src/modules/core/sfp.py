@@ -12,6 +12,7 @@
 # - Modified by Connor DeCamp on 10/01/2021
 # - Modified by Connor DeCamp on 10/18/2021
 # - Modified by Connor DeCamp on 10/20/2021
+# - Modified by Connor DeCamp on 10/27/2021
 ##
 
 from typing import List
@@ -707,11 +708,11 @@ class SFP:
         # Not sure if this is correct. The standard says it's
         # all ASCII codes so it shouldn't matter. I'm just formatting it
         # nicely
-        year = f'{self.page_a0[84]}{self.page_a0[85]}'
-        month = f'{self.page_a0[86]}{self.page_a0[87]}'
-        day = f'{self.page_a0[88]}{self.page_a0[89]}'
+        year = f'{chr(self.page_a0[84])}{chr(self.page_a0[85])}'
+        month = f'{chr(self.page_a0[86])}{chr(self.page_a0[87])}'
+        day = f'{chr(self.page_a0[88])}{chr(self.page_a0[89])}'
 
-        extra_code = f'{self.page_a0[90]}{self.page_a0[91]}'
+        extra_code = f'{chr(self.page_a0[90])}{chr(self.page_a0[91])}'
 
         date = f'{month}/{day}/{year}\t{extra_code}'
         return date
@@ -1297,7 +1298,7 @@ class SFP:
                    self.get_rx_pwr_2() * value + self.get_rx_pwr_1() * value + \
                    self.get_rx_pwr_0())
         else:
-            raise Exception("ERROR:SFP::get_rx_pwr() - Unknown calibration type")
+            print("ERROR:SFP::get_rx_pwr() - Unknown calibration type")
 
     def get_laser_temp_or_wavelength(self) -> float:
         msb = self.page_a2[106]
@@ -1326,5 +1327,9 @@ class SFP:
             offset = 0.0
 
         return Decimal(slope) * Decimal(num) + Decimal(offset)
+
+
+    def __repr__(self):
+        return f'{self.get_vendor_name()}-{self.get_vendor_part_number()}-{self.get_vendor_serial_number()}-{self.get_wavelength()}nm'
 
 # END sfp.py

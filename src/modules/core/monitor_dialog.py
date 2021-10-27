@@ -126,6 +126,7 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         # Green/black: > warning low
         # light blue:  > alarm low
         # dark blue:   <= alarm low
+
         temperature = sfp.get_temperature()
         self.temperatureLineEdit.setText(f'{temperature:.3f}')
         self._update_color_indicator(
@@ -173,13 +174,30 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
             float(self.rxPowerHighAlarmLineEdit.text()),
             float(self.rxPowerHighWarnLineEdit.text()),
             float(self.rxPowerLowWarnLineEdit.text()),
-            float(self.rxPowerLowAlarmLineEdit.text())
+            float(self.rxPowerLowAlarmLineEdit.text()),
+            self.rxPowerLineEdit
         )
 
-        #TODO - provide color coding for optional parameters
+        # Provide color coding for optional parameters
         if sfp.calibration_type == SFP.CalibrationType.INTERNAL:
             self.laserTempLineEdit.setText(f'{sfp.get_laser_temp_or_wavelength():.3f}')
+            self._update_color_indicator(
+                float(self.laserTempLineEdit.text()),
+                float(self.laserTempHighAlarmLineEdit.text()),
+                float(self.laserTempHighWarnLineEdit.text()),
+                float(self.laserTempLowWarnLineEdit.text()),
+                float(self.laserTempLowAlarmLineEdit.text()),
+                self.laserTempLineEdit
+            )
             self.tecCurrentLineEdit.setText(f'{sfp.get_tec_current():.3f}')
+            self._update_color_indicator(
+                float(self.tecCurrentLineEdit.text()),
+                float(self.tecCurrentHighAlarmLineEdit.text()),
+                float(self.tecCurrentHighWarnLineEdit.text()),
+                float(self.tecCurrentLowWarnLineEdit.text()),
+                float(self.tecCurrentLowAlarmLineEdit.text()),
+                self.tecCurrentLineEdit
+            )
         else:
             self.laserTempLineEdit.setText('Not supported')
             self.tecCurrentLineEdit.setText('Not supported')
@@ -212,17 +230,18 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         BLACK = 'rgb(0, 0, 0)'
         LIGHT_BLUE = 'rgb(114, 159, 207)'
         BLUE = 'rgb(0, 0, 255)'
+        WHITE = 'rgb(255, 255, 255)'
 
         if diagnostic_value >= alarm_high:
-            line_edit.setStyleSheet(f'color: {RED}')
+            line_edit.setStyleSheet(f'background-color: {RED}; color: {WHITE}')
         elif diagnostic_value >= warning_high:
-            line_edit.setStyleSheet(f'color: {YELLOW}')
+            line_edit.setStyleSheet(f'background-color: {YELLOW}; color: {BLACK}')
         elif diagnostic_value > warning_low:
-            line_edit.setStyleSheet(f'color: {BLACK}')
+            line_edit.setStyleSheet(f'background-color: {WHITE}; color: {BLACK}')
         elif diagnostic_value > alarm_low:
-            line_edit.setStyleSheet(f'color: {LIGHT_BLUE}')
+            line_edit.setStyleSheet(f'background-color: {LIGHT_BLUE}; color: {BLACK}')
         else:
-            line_edit.setStyleSheet(f'color: {BLUE}')
+            line_edit.setStyleSheet(f'background-color: {BLUE}; color: {WHITE}')
 
     def _emit_command_restart_timer(self):
         '''! Emits the timed_command signal and restarts the timer.'''

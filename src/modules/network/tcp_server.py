@@ -50,8 +50,9 @@ class TCPServer(QObject):
         self.PORT = 20100
 
         if not self.server.listen(QHostAddress(self.HOST), self.PORT):
-            raise Exception(f"Server failed to listen on {self.HOST}:{self.PORT}")
-        
+            print(f"Server failed to listen on {self.HOST}:{self.PORT}")
+            return
+
         self.log_signal.emit(f'TCP Server listening on {self.HOST}:{self.PORT}')
 
     def init_dock_connection(self, sender_ip):
@@ -208,7 +209,8 @@ class TCPServer(QObject):
     def process_client_message(self, ip: str, port: int, command: Union[Message, ReadRegisterMessage]):
 
         if command.code == MessageCode.CLONE_SFP_MEMORY_ERROR:
-            self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} said: {command.data_str}')
+            self.log_signal.emit(f'ERROR from DOCKING STATION at {ip}:{port} - said: {command.data_str}')
+            self.update_ui_signal.emit(MessageCode.CLONE_SFP_MEMORY_ERROR)
         elif command.code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
             self.update_ui_signal.emit(MessageCode.CLONE_SFP_MEMORY_SUCCESS)
         elif command.code == MessageCode.DIAGNOSTIC_INIT_A0_ACK:
@@ -261,14 +263,21 @@ class TCPServer(QObject):
         for key in self.connected_dock_dict:
             if self.connected_dock_dict[key] is not None:
                 sock: QTcpSocket = self.connected_dock_dict[key]
-                sock.close()
-                self.connected_dock_dict.pop(key)
+                try:
+                    sock.close()
+                    self.connected_dock_dict.pop(key)
+                except Exception as ex:
+                    print(ex)
 
         for key in self.connected_cloudplug_dict:
             if self.connected_cloudplug_dict[key] is not None:
                 sock: QTcpSocket = self.connected_cloudplug_dict[key]
-                sock.close()
-                self.connected_cloudplug_dict.pop(key)
+                try:
+                    sock.close()
+                    self.connected_cloudplug_dict.pop(key)
+                except Exception as ex:
+                    print(ex)
+                    
 
 
 
