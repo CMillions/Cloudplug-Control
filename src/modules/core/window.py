@@ -22,7 +22,6 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage,\
                             QListWidgetItem, QPlainTextEdit,\
                             QTableWidgetItem, QMainWindow
-from sip import voidptr
 
 ##
 # Local Library Imports

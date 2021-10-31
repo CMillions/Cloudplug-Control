@@ -26,7 +26,10 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
+     </property>
+     <property name="documentMode">
+      <bool>false</bool>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -719,7 +722,7 @@
          </item>
          <item row="0" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="1" column="0">
@@ -744,7 +747,7 @@
          </item>
          <item row="1" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="2" column="0">
@@ -769,7 +772,7 @@
          </item>
          <item row="2" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="3" column="0">
@@ -794,7 +797,7 @@
          </item>
          <item row="3" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="4" column="0">
@@ -820,7 +823,7 @@ Module Management Reference Code Tables) </string>
          </item>
          <item row="4" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="5" column="0">
@@ -846,7 +849,7 @@ Module Management Reference Code Tables) </string>
          </item>
          <item row="5" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="6" column="0">
@@ -871,7 +874,7 @@ Module Management Reference Code Tables) </string>
          </item>
          <item row="6" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="7" column="0">
@@ -897,7 +900,7 @@ cable attenuation in dB at 12.9 GHz</string>
          </item>
          <item row="7" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="8" column="0">
@@ -923,7 +926,7 @@ cable attenuation in dB at 25.78 GHz</string>
          </item>
          <item row="8" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="9" column="0">
@@ -948,7 +951,7 @@ cable attenuation in dB at 25.78 GHz</string>
          </item>
          <item row="9" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="10" column="0">
@@ -973,7 +976,7 @@ cable attenuation in dB at 25.78 GHz</string>
          </item>
          <item row="10" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="11" column="0">
@@ -999,7 +1002,7 @@ Alternatively, copper or direct attach cable, units of m</string>
          </item>
          <item row="11" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="12" column="0">
@@ -1025,7 +1028,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="12" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="13" column="0">
@@ -1050,7 +1053,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="13" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="14" column="0">
@@ -1075,7 +1078,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="14" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="15" column="0">
@@ -1100,7 +1103,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="15" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="16" column="0">
@@ -1125,7 +1128,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="16" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="17" column="0">
@@ -1150,7 +1153,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="17" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="18" column="0">
@@ -1175,7 +1178,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="18" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="19" column="0">
@@ -1200,7 +1203,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="19" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="20" column="0">
@@ -1225,7 +1228,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="20" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="21" column="0">
@@ -1250,7 +1253,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="21" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="22" column="0">
@@ -1275,7 +1278,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="22" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="23" column="0">
@@ -1300,7 +1303,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="23" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="24" column="0">
@@ -1325,7 +1328,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="24" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="25" column="0">
@@ -1350,7 +1353,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="25" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="26" column="0">
@@ -1375,7 +1378,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="26" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="27" column="0">
@@ -1401,7 +1404,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="27" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="28" column="0">
@@ -1427,7 +1430,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="28" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="29" column="0">
@@ -1452,7 +1455,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="29" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="30" column="0">
@@ -1477,7 +1480,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="30" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
          <item row="31" column="0">
@@ -1502,7 +1505,7 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
          </item>
          <item row="31" column="4">
           <property name="text">
-           <string> </string>
+           <string/>
           </property>
          </item>
         </widget>
