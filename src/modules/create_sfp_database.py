@@ -96,16 +96,37 @@ def main():
 
     mycursor = mydb.cursor()
 
+
+    # Create table for stress scenarios
+    query = (
+        "CREATE TABLE `temperature_stress` ("
+        "    `stress_id` INT AUTO_INCREMENT PRIMARY KEY,"
+        "    `sfp_id` INT,"
+        "    `scenario_name` VARCHAR(255),"
+        "    FOREIGN KEY (`sfp_id`) REFERENCES `page_a0`(`id`) ON DELETE CASCADE,"
+        "    FOREIGN KEY (`sfp_id`) REFERENCES `page_a2`(`id`) ON DELETE CASCADE,"
+    )
+    
+    num_vals = 9
+    for i in range(num_vals):
+        query += f'`{i}` INT, '
+
+    query += f'`{num_vals}` INT)'
+
+    print(query)
+
+    mycursor.execute(query)
+    mydb.commit()
+
     #create_table(mycursor)
     #create_page_table(mycursor, 'page_a0')
-    create_page_table(mycursor, 'page_a2')
+    #create_page_table(mycursor, 'page_a2')
 
     #T= Testing insertion to database
     #sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
     #vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
     #mycursor.execute(sql, vals)
     #insert_sfp_data_to_table(mycursor, "sfp", list(vals))
-    mydb.commit()
     #print(mycursor.rowcount, "record inserted")
 
     #print("\n\nReading all entries from sfp table")
