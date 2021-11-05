@@ -21,6 +21,7 @@
 ##
 import sys
 
+
 ##
 # Third Party Library Imports
 ##
@@ -31,11 +32,17 @@ from PyQt5.QtWidgets import QApplication
 ##
 from modules.core.window import Window
 
+APPLICATION_NAME = "CloudPlug Control"
+APPLICATION_DISPLAY_NAME = "CloudPlug Control"
+APPLICATION_VERSION = "0.2"
 
 def main():
 
     # Create the Qt Application and an instance of the window class
     app = QApplication(sys.argv)
+    app.setApplicationName(APPLICATION_NAME)
+    app.setApplicationDisplayName(APPLICATION_DISPLAY_NAME)
+    app.setApplicationVersion(APPLICATION_VERSION)
 
     main_window = Window()
     main_window.setWindowTitle('CloudPlug Control')

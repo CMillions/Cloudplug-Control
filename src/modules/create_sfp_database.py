@@ -99,7 +99,7 @@ def main():
 
     # Create table for stress scenarios
     query = (
-        "CREATE TABLE `temperature_stress` ("
+        "CREATE TABLE `stress_scenarios` ("
         "    `stress_id` INT AUTO_INCREMENT PRIMARY KEY,"
         "    `sfp_id` INT,"
         "    `scenario_name` VARCHAR(255),"
@@ -107,16 +107,21 @@ def main():
         "    FOREIGN KEY (`sfp_id`) REFERENCES `page_a2`(`id`) ON DELETE CASCADE,"
     )
     
-    num_vals = 9
+    # Need 1 byte for each value
+    num_vals = 19
     for i in range(num_vals):
         query += f'`{i}` INT, '
 
     query += f'`{num_vals}` INT)'
 
-    print(query)
+    #print(query)
+
+    #query = "INSERT INTO stress_scenarios (stress_id, sfp_id, scenario_name, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9) "
 
     mycursor.execute(query)
     mydb.commit()
+
+
 
     #create_table(mycursor)
     #create_page_table(mycursor, 'page_a0')

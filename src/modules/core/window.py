@@ -19,6 +19,7 @@ from typing import Tuple
 # Third Party Library Imports
 ##
 from PyQt5 import QtCore
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage,\
                             QListWidgetItem, QPlainTextEdit,\
                             QTableWidgetItem, QMainWindow
@@ -65,7 +66,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.verticalHeader().setVisible(False)
-
 
         self.append_to_debug_log('Starting UDP device discovery thread')
         self.udp_thread = QtCore.QThread()
@@ -160,7 +160,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         page_a0 = []
 
-        # should only be one result...
+        # Get the page_a0 values from the cursor
         for res in mycursor:
             for i in range(1, len(res)):
                 page_a0.append(res[i])
@@ -169,23 +169,32 @@ class Window(QMainWindow, Ui_MainWindow):
 
         page_a2 = []
 
-        # should only be one result...
+        # Get the page_a2 values from the cursor
         for res in mycursor:
             for i in range(1, len(res)):
                 page_a2.append(res[i])
 
+        # Get all stress scenarios for the
+        # selected sfp
+        mycursor.execute(f'SELECT * FROM sfp_info.stress_scenarios WHERE sfp_id={selected_sfp_id}')
+        stress_scenarios_list = []
+        for res in mycursor:
+            stress_scenarios_list.append(res)
+            print(res)
 
         mydb.close()
 
         sfp = SFP(page_a0, page_a2)
 
-        print(format(sfp.calculate_cc_base(), '02X'))
-        print(sfp.get_cc_base())
+        # Compare checksum values
+        #print(format(sfp.calculate_cc_base(), '02X'))
+        #print(sfp.get_cc_base())
 
         # Create SFP object after reading from database
 
         memory_dialog = MemoryMapDialog(self)
         memory_dialog.initialize_table_values(sfp)
+        memory_dialog.initialize_stress_scenarios_table(stress_scenarios_list)
         memory_dialog.show()
 
     def append_row_to_sfp_table(self, id_memory_map_tuple: Tuple) -> None:
@@ -238,10 +247,19 @@ class Window(QMainWindow, Ui_MainWindow):
             error_dialog.showMessage("You must select an SFP from the table!")
             error_dialog.exec()
             return
-        
-        for model_index in selected_sfp_persona:
-            print(f'{self.tableWidget.model().data(model_index) = }')
 
+        sfp_id = int(selected_sfp_persona[0].data())
+
+
+        msg_code = MessageCode.REPGORAM_CLOUDPLUG
+        data_to_send = [sfp_id]
+        msg = ReadRegisterMessage(msg_code, '', 0x00, data_to_send)
+
+        # For each selected cloudplug, send the command
+        for ip in selected_cloudplugs:
+            cloudplug_ip = ip.text()
+            msg_tuple = (cloudplug_ip, msg)
+            self.send_command_signal.emit(msg_tuple)
 
     def handle_udp_client_message(self, contents_ip_port_tuple: Tuple):
         '''! Handles the message from a UDP client.'''
@@ -297,7 +315,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.send_command_signal.emit(msg_tuple)
             
 
-    def handle_tcp_client_connect(self, data: object):
+    def handle_tcp_client_connect(self, data: DeviceType):
         '''! Handles when a TCP client connects.'''
         self.append_to_debug_log(f"Successful TCP connection from {data}")
 
@@ -309,8 +327,11 @@ class Window(QMainWindow, Ui_MainWindow):
         elif device_type == DeviceType.CLOUDPLUG:
             self.listWidget.addItem(QListWidgetItem(device_ip))
 
-    def handle_tcp_client_disconnect(self, data: str):
-        '''! Handles when a TCP client disconnects.'''
+    def handle_tcp_client_disconnect(self, data: DeviceType):
+        '''!Handles when a TCP client disconnects.
+        
+        @param data The DeviceType object to be removed from the software.
+        '''
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
         
@@ -330,7 +351,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
 
     def handle_update_ui_signal(self, code: MessageCode):
-        
+        '''!Handles the update_ui_signal emitted from the
+        TCP server.
+
+        @param code The MessageCode enumerated value to be processed
+        '''
         if code == MessageCode.CLONE_SFP_MEMORY_SUCCESS:
             self.append_to_debug_log("A docking station successfully, cloned SFP memory")
             self.readSfpMemoryButton.setEnabled(True)
@@ -497,6 +522,8 @@ class Window(QMainWindow, Ui_MainWindow):
 
     ##
     # Utility functions
+    #
+    # You cannot rename closeEvent(), its a pyQT function.
     ##
     def closeEvent(self, event):
         '''! Handles the closeEvent when the user presses the red X.

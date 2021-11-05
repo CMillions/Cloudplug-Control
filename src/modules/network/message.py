@@ -33,12 +33,11 @@ class MessageCode(Enum):
     DIAGNOSTIC_INIT_A2_ACK      = 130
     REAL_TIME_REFRESH           = 131
     REAL_TIME_REFRESH_ACK       = 132
-
     I2C_ERROR                   = 150
-
 
     # Cloudplug Codes
     CLOUDPLUG_DISCOVER_ACK = 200
+    REPGORAM_CLOUDPLUG = 201
 
 ## The number of bytes in a CloudPlug network protocol message
 MESSAGE_BYTES = 256

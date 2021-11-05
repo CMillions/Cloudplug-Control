@@ -10,13 +10,12 @@
 # - None
 ##
 
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QHeaderView, QListWidget, \
-                            QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
-                            QDialog
+from PyQt5.QtWidgets import QHeaderView, QListWidget, QTableWidgetItem, QDialog
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 from modules.core.memory_map_dialog_autogen import Ui_Dialog
+from modules.core.create_stress_scenario_dialog import CreateStressScenarioDialog
 from modules.core.sfp import SFP
 from enum import Enum
 from typing import List
@@ -65,12 +64,21 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         header = self.tableWidget_2.horizontalHeader()
 
         #header.sectionResized.connect(self.tableWidget_2.resizeRowsToContents)
+
+        ##
+        # Connect button slots
+        ##
+
+        self.addStressButton.clicked.connect(self._handle_add_stress_button_clicked)
         
         
 
 
     def initialize_table_values(self, sfp_to_show: SFP):
+        '''! Initializes the characteristic table values.
         
+        @param sfp_to_show The SFP object to display information about.
+        '''
         self.associated_sfp = sfp_to_show
 
         # Loop from [0, 255] and display memory map
@@ -90,7 +98,33 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         # Fill in the values on the characteristics page
         self.generate_characteristics_table()
 
+
+    def initialize_stress_scenarios_table(self, stress_scenarios_list):
+        '''!Given a list of stress scenario tuples from the
+        database, fills out the table in this dialog.
         
+        @param stress_scenarios_list A list of results from a MySQL database
+        '''
+
+        ##
+        # Database is formatted as
+        # Name         Column Number
+        # --------------------------
+        # stress_id         0
+        # sfp_id            1
+        # scenario_name     2
+        # values           3-9
+        ##
+        for data in stress_scenarios_list:
+            scenario_name = data[2]
+            list_of_values = [val for val in data[3::]]
+
+            row_count = self.tableWidget_3.rowCount()
+            self.tableWidget_3.insertRow(row_count)
+            self.tableWidget_3.setItem(row_count, 0, QTableWidgetItem(str(scenario_name)))
+            self.tableWidget_3.setItem(row_count, 1, QTableWidgetItem(repr(list_of_values)))
+
+        self.tableWidget_3.resizeColumnsToContents()
 
     def change_table_display_mode(self, selection: str):
 
@@ -199,7 +233,21 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         self.tableWidget_2.resizeRowsToContents()
 
 
-    def handle_close_event(self, event):
+    ##
+    # Button Handlers
+    ##
+
+    def _handle_add_stress_button_clicked(self):
+        self.dialog = CreateStressScenarioDialog()
+
+        self.dialog.show()
+
+        print('handler')
+
+    ##
+    # Overriden PyQT Methods
+    ##
+    def closeEvent(self, event):
         self.deleteLater()
         event.accept()
             

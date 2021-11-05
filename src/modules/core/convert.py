@@ -12,6 +12,8 @@
 ##
 
 from decimal import *
+from typing import List
+import binary_fractions
 
 def ieee754_to_decimal(b3: int, b2: int, b1: int, b0: int) -> Decimal:
     '''! Takes 4 bytes in IEEE 754 floating point format and converts it into a floating point
@@ -157,3 +159,24 @@ def bytes_to_tec_current(b1: int, b0: int) -> float:
     '''
 
     return offset_bytes_to_signed_twos_complement_int(b1, b0) / 10.0
+
+
+def unsigned_decimal_to_bytes(number: Decimal) -> List[int]:
+    '''!Converts a number in the range [0, 255.9961]
+    into two bytes, b1.b0.
+
+    @param number The number to be converted
+    @return A list containing the two bytes [b1, b0]
+    '''
+
+    if number < 0 or number > 255.9961:
+        raise ValueError("Invalid number received")
+
+    b = str(binary_fractions.Binary(number))
+    b = b.strip("0b")
+    b = b.split('.')
+    
+    b1 = int(b[0][0:8],base=2)
+    b0 = int(b[1][0:8],base=2)
+
+    return [b1, b0]
