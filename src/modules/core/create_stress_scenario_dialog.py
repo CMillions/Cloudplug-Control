@@ -10,15 +10,29 @@
 ##
 
 from typing import List
+from enum import Enum
+from PyQt5.QtCore import pyqtSignal
 
 from PyQt5.QtWidgets import QDialog, QErrorMessage
+from modules.core.convert import temperature_bytes_to_signed_twos_complement_decimal
 
 from modules.core.create_stress_scenario_dialog_autogen import Ui_Dialog
 from modules.network.sql_connection import SQLConnection
 
+from modules.core.convert import float_to_signed_twos_complement_bytes
+
+class SupportedParameters(Enum):
+    TEMPERATURE = 0
+    VCC = 1
+    TX_BIAS = 2
+    RX_PWR = 3
+    TX_PWR = 4
+
 class CreateStressScenarioDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, parent=None):
+    refresh_stress_signal = pyqtSignal(int)
+
+    def __init__(self, parent=None, sfp_id=None):
         super().__init__(parent)
         self.setupUi(self)
 
@@ -31,6 +45,8 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         self.submitButton.clicked.connect(
             self.handle_submit_button_clicked
         )
+
+        self.selected_sfp_id = sfp_id
 
 
     def handle_combobox_selection_change(self, new_index) -> None:
@@ -47,19 +63,15 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         # power. Want to tell the user what units to enter the
         # numbers in
 
-        TEMPERATURE = 0
-        VCC = 1
-        TX_BIAS = 2
-        RX_PWR = 3
-        TX_PWR = 4
+        new_index = SupportedParameters(new_index)
 
-        if new_index == TEMPERATURE:
+        if new_index == SupportedParameters.TEMPERATURE:
             self.unitLabel.setText("C")
-        elif new_index == VCC:
+        elif new_index == SupportedParameters.VCC:
             self.unitLabel.setText("V")
-        elif new_index == TX_BIAS:
+        elif new_index == SupportedParameters.TX_BIAS:
             self.unitLabel.setText("mA")
-        elif new_index == RX_PWR or new_index == TX_PWR:
+        elif new_index == SupportedParameters.RX_PWR or new_index == SupportedParameters.TX_PWR:
             self.unitLabel.setText("mW")
         else:
             self.unitLabel.setText("ERROR")
@@ -101,6 +113,18 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
             e.exec()
             return
 
+        byte_list = []
+
+        selected_index = self.parameterComboBox.currentIndex()
+        selected_index = SupportedParameters(selected_index)        
+
+        if selected_index == SupportedParameters.TEMPERATURE:
+            for val in float_values:
+                b1, b0 = float_to_signed_twos_complement_bytes(val)
+                byte_list.append(b1)
+                byte_list.append(b0)
+
+        print(byte_list)
 
         # Now we need to convert each value into byte format
         # This depends on the type of stress scenario the user
@@ -111,7 +135,23 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         sql_connection = SQLConnection()
         cursor = sql_connection.get_cursor()
 
-        query = "INSERT INTO stress_scenarios (stress_id, sfp_id, \
-            scenario_name, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 \
-            13, 14, 15, 16, 17, 18, 19) "
+        query = 'INSERT INTO stress_scenarios (stress_id, sfp_id, scenario_name, `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`, `18`, `19`) VALUES (%s, %s, %s, '
+        
+        # We are inserting byte values
+        NUM_BYTES = NUM_VALUES_NEEDED * 2
+
+        for i in range(NUM_BYTES - 1):
+            query += "%s, "
+
+        query += "%s)"
+
+        values = (0, self.selected_sfp_id, str(self.nameLineEdit.text())) + tuple(byte_list)
+
+
+        print(query, values)
+
+        cursor.execute(query, values)
+
+        self.refresh_stress_signal.emit(self.selected_sfp_id)
+        self.close()
 

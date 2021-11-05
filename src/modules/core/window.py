@@ -7,6 +7,7 @@
 # @section mod_history Modification History
 # - Modified on 10/19/2021 by Connor DeCamp
 # - Modified on 10/21/2021 by Connor DeCamp
+# - Modified on 11/04/2021 by Connor DeCamp
 ##
 
 ##
@@ -174,14 +175,6 @@ class Window(QMainWindow, Ui_MainWindow):
             for i in range(1, len(res)):
                 page_a2.append(res[i])
 
-        # Get all stress scenarios for the
-        # selected sfp
-        mycursor.execute(f'SELECT * FROM sfp_info.stress_scenarios WHERE sfp_id={selected_sfp_id}')
-        stress_scenarios_list = []
-        for res in mycursor:
-            stress_scenarios_list.append(res)
-            print(res)
-
         mydb.close()
 
         sfp = SFP(page_a0, page_a2)
@@ -194,7 +187,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         memory_dialog = MemoryMapDialog(self)
         memory_dialog.initialize_table_values(sfp)
-        memory_dialog.initialize_stress_scenarios_table(stress_scenarios_list)
+        memory_dialog.refresh_stress_scenario_table(selected_sfp_id)
         memory_dialog.show()
 
     def append_row_to_sfp_table(self, id_memory_map_tuple: Tuple) -> None:

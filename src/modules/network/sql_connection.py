@@ -60,7 +60,8 @@ class SQLConnection:
                 user=db_user,
                 password=db_pass,
                 database=db_name,
-                connection_timeout=TIMEOUT_SEC
+                connection_timeout=TIMEOUT_SEC,
+                autocommit=True
             )
 
             self.cursor = self.connection.cursor()

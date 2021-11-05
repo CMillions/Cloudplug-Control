@@ -7,8 +7,11 @@
 # @section file_author Author
 # - Created on 08/04/2021 by Connor DeCamp
 # @section mod_history Modification History
-# - None
+# - Modified on 11/04/2021 by Connor DeCamp
 ##
+
+from enum import Enum
+from typing import List
 
 from PyQt5.QtWidgets import QHeaderView, QListWidget, QTableWidgetItem, QDialog
 from PyQt5.QtCore import *
@@ -17,8 +20,9 @@ from PyQt5.QtGui import *
 from modules.core.memory_map_dialog_autogen import Ui_Dialog
 from modules.core.create_stress_scenario_dialog import CreateStressScenarioDialog
 from modules.core.sfp import SFP
-from enum import Enum
-from typing import List
+
+from modules.network.sql_connection import SQLConnection
+
 
 class MemoryMapDialog(QDialog, Ui_Dialog):
 
@@ -81,6 +85,11 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         '''
         self.associated_sfp = sfp_to_show
 
+        self.setWindowTitle(self.associated_sfp.get_vendor_name() + 
+            " " + self.associated_sfp.get_vendor_part_number() + 
+            " " + self.associated_sfp.get_vendor_serial_number()
+        )
+
         # Loop from [0, 255] and display memory map
         # values in hex by default
         for i in range(256):
@@ -98,23 +107,35 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         # Fill in the values on the characteristics page
         self.generate_characteristics_table()
 
-
-    def initialize_stress_scenarios_table(self, stress_scenarios_list):
+    def refresh_stress_scenario_table(self, sfp_id: int):
         '''!Given a list of stress scenario tuples from the
         database, fills out the table in this dialog.
         
-        @param stress_scenarios_list A list of results from a MySQL database
         '''
+        self.selected_sfp_id = sfp_id
+
+        sql_conn = SQLConnection()
+        cursor = sql_conn.get_cursor()
+
+        cursor.execute(f'SELECT * FROM stress_scenarios where sfp_id={self.selected_sfp_id}')
+
+        stress_scenarios_list = []
+        for res in cursor:
+            stress_scenarios_list.append(res)
+
+        sql_conn.close()
 
         ##
         # Database is formatted as
+        #
         # Name         Column Number
         # --------------------------
         # stress_id         0
         # sfp_id            1
         # scenario_name     2
-        # values           3-9
+        # values           3-22
         ##
+        self.tableWidget_3.setRowCount(0)
         for data in stress_scenarios_list:
             scenario_name = data[2]
             list_of_values = [val for val in data[3::]]
@@ -232,17 +253,19 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
 
         self.tableWidget_2.resizeRowsToContents()
 
-
     ##
     # Button Handlers
     ##
 
     def _handle_add_stress_button_clicked(self):
-        self.dialog = CreateStressScenarioDialog()
 
-        self.dialog.show()
+        self.stress_dialog = CreateStressScenarioDialog(self, self.selected_sfp_id)
+        self.stress_dialog.refresh_stress_signal.connect(self.refresh_stress_scenario_table)
+        self.stress_dialog.show()
 
         print('handler')
+
+
 
     ##
     # Overriden PyQT Methods

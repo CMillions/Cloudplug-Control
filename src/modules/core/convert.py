@@ -5,7 +5,10 @@
 # @section file_author Author
 # - Created on 07/29/2021 by Connor DeCamp
 # @section mod_history Modification History
-# - Modified on 07/29/2021 by Connor DeCamp 
+# - Modified on 07/29/2021 by Connor DeCamp
+# - Modified on 09/13/2021 by Connor DeCamp
+# - Modified on 10/14/2021 by Connor DeCamp
+# - Modified on 11/04/2021 by Connor DeCamp 
 #
 # See SFF-8472 for tables that determine what each
 # value means in the memory map.
@@ -180,3 +183,50 @@ def unsigned_decimal_to_bytes(number: Decimal) -> List[int]:
     b0 = int(b[1][0:8],base=2)
 
     return [b1, b0]
+
+
+def float_to_signed_twos_complement_bytes(number: float) -> List[int]:
+    '''!Converts a number in the range [-127.996, 127.996]
+    into two bytes, b1.b0 using signed two's complement.
+
+    @param number The floating point value to be converted
+    @return A list containing the two bytes [b1, b0]
+    '''
+
+    MIN = -127.99609375
+    MAX = 127.99609375
+
+    if number < MIN or number > MAX:
+        raise ValueError(f"Number must be in range [{MIN}, {MAX}]")
+
+    bin_str = str(binary_fractions.TwosComplement(number))
+    bin_str = bin_str.split('.')
+
+
+    if len(bin_str) < 2:
+        bin_str.append('00000000')
+
+    pad_b1 = 0
+    pad_b0 = 0
+
+    if len(bin_str[0]) < 8:
+        pad_b1 = 8 - len(bin_str[0])
+
+    if len(bin_str[1]) < 8:
+        pad_b0 = 8 - len(bin_str[1])
+
+    for i in range(pad_b1):
+        bin_str[0] = "0" + bin_str[0]    
+
+    for i in range(pad_b0):
+        bin_str[1] += "0"
+
+
+    b1 = int(bin_str[0][0:8], base=2)
+    b0 = int(bin_str[1][0:8], base=2)
+
+    return [b1, b0]
+
+
+if __name__ == '__main__':
+    a,b = float_to_signed_twos_complement_bytes(5)
