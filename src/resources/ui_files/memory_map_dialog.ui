@@ -1563,6 +1563,9 @@ Alternatively, copper or direct attach cable multiplier and base value</string>
        </item>
        <item row="0" column="0">
         <widget class="QTableWidget" name="tableWidget_3">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
          <column>
           <property name="text">
            <string>Scenario Name</string>

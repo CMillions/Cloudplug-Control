@@ -14,7 +14,7 @@ from enum import Enum
 from PyQt5.QtCore import pyqtSignal
 
 from PyQt5.QtWidgets import QDialog, QErrorMessage
-from modules.core.convert import temperature_bytes_to_signed_twos_complement_decimal
+from modules.core.convert import float_to_unsigned_decimal_bytes, temperature_bytes_to_signed_twos_complement_decimal
 
 from modules.core.create_stress_scenario_dialog_autogen import Ui_Dialog
 from modules.network.sql_connection import SQLConnection
@@ -48,6 +48,12 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
 
         self.selected_sfp_id = sfp_id
 
+        # Set lower and upper bounds on input
+        # Default parameter is temperature, so
+        # bound should be [-127.996, 127.996]
+        self.low_bound = -127.996
+        self.high_bound = 127.996
+
 
     def handle_combobox_selection_change(self, new_index) -> None:
         '''!Handler method for when the user changes their selection
@@ -67,14 +73,25 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
 
         if new_index == SupportedParameters.TEMPERATURE:
             self.unitLabel.setText("C")
+            self.low_bound = -127.996
+            self.high_bound = 127.996
         elif new_index == SupportedParameters.VCC:
             self.unitLabel.setText("V")
+            self.low_bound = 0
+            self.high_bound = 6.5535
         elif new_index == SupportedParameters.TX_BIAS:
             self.unitLabel.setText("mA")
+            self.low_bound = 0
+            self.high_bound = 131.07
         elif new_index == SupportedParameters.RX_PWR or new_index == SupportedParameters.TX_PWR:
             self.unitLabel.setText("mW")
+            self.low_bound = 0
+            self.high_bound = 6.5535
         else:
             self.unitLabel.setText("ERROR")
+
+        self.valueRangeLabel.setText(f"[{self.low_bound}, {self.high_bound:.04f}]")
+        
 
     def handle_submit_button_clicked(self):
         # Process the entries in the values line-edit
@@ -118,11 +135,42 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         selected_index = self.parameterComboBox.currentIndex()
         selected_index = SupportedParameters(selected_index)        
 
-        if selected_index == SupportedParameters.TEMPERATURE:
-            for val in float_values:
-                b1, b0 = float_to_signed_twos_complement_bytes(val)
-                byte_list.append(b1)
-                byte_list.append(b0)
+        b1 = 0
+        b0 = 0
+
+        # Try to convert values:
+        try:
+            if selected_index == SupportedParameters.TEMPERATURE:
+                for val in float_values:
+                    b1, b0 = float_to_signed_twos_complement_bytes(val)
+            elif selected_index == SupportedParameters.VCC:
+                for val in float_values:
+                    # User is entering values in Volts, so we have to
+                    # convert to units of 100 uV, which is resolution
+                    # stored in memory map. Essentially their value
+                    # must be between [0, 6.5535] or it will not be 
+                    # submitted
+                        b1, b0 = float_to_unsigned_decimal_bytes(val * 10000.0)
+            elif selected_index == SupportedParameters.TX_BIAS:
+                for val in float_values:
+                    # Entered value is mA, so we have to convert back to
+                    # LSB of 2 uA. Divide by 2*10^-3 to convert back
+                    b1, b0 = float_to_unsigned_decimal_bytes(val / float(2 * 10**-3))
+            elif selected_index == SupportedParameters.RX_PWR or selected_index == SupportedParameters.TX_PWR:
+                for val in float_values:
+                    b1, b0 = float_to_unsigned_decimal_bytes(val / float(0.1 * 10**-3))
+        except ValueError:
+
+            # Conversion methods will raise ValueError if the input is
+            # invalid. Catch it and show the user an error message
+
+            error_msg = QErrorMessage()
+            error_msg.showMessage(f'{val} is not in the range [{self.low_bound:.04f},{self.high_bound:.04f}]')
+            error_msg.exec()
+            return
+
+        byte_list.append(b1)
+        byte_list.append(b0)
 
         print(byte_list)
 

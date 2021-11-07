@@ -19,7 +19,7 @@ myPath = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, myPath + '/../')
 
 
-from modules.core.convert import bytes_to_tec_current
+from modules.core.convert import bytes_to_tec_current, float_to_signed_twos_complement_bytes, float_to_unsigned_decimal_bytes
 from modules.core.convert import offset_bytes_to_signed_twos_complement_int
 from modules.core.convert import slope_bytes_to_unsigned_decimal
 from modules.core.convert import temperature_bytes_to_signed_twos_complement_decimal
@@ -51,6 +51,8 @@ class TestConvertMethods(unittest.TestCase):
         # 1111 1111.1111 1111
         #
         # The MSB (D7) is the sign bit
+        #
+        #
         # The bit weights for D are then
         # Sign 128 64 32 16 8 4 2 1
         #
@@ -119,6 +121,18 @@ class TestConvertMethods(unittest.TestCase):
         self.assertAlmostEqual(Decimal(-2004.12304), ieee754_to_decimal(0xC4, 0xFa, 0x83, 0xF0), delta=DELTA)
         self.assertAlmostEqual(Decimal(-0.000001), ieee754_to_decimal(0xB5, 0x86, 0x37, 0xBD), delta=DELTA)
         self.assertAlmostEqual(Decimal(44444.44444), ieee754_to_decimal(0x47, 0x2D, 0x9C, 0x72), delta=DELTA)
+
+    def test_float_to_signed_twos_complement_bytes(self):
+        
+        DELTA = 1/256.0
+
+        i = -127.996
+
+        while i < 128:
+            b1,b0 = float_to_signed_twos_complement_bytes(i)
+            re_converted = temperature_bytes_to_signed_twos_complement_decimal(b1, b0)
+            self.assertAlmostEqual(i, re_converted, delta=DELTA)
+            i += 1
 
 if __name__ == '__main__':
     unittest.main()

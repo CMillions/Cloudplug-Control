@@ -63,6 +63,7 @@ class SQLConnection:
                 connection_timeout=TIMEOUT_SEC,
                 autocommit=True
             )
+            print('Connected')
 
             self.cursor = self.connection.cursor()
 

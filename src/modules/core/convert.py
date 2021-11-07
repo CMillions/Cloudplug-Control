@@ -17,6 +17,7 @@
 from decimal import *
 from typing import List
 import binary_fractions
+from binary_fractions import binary
 
 def ieee754_to_decimal(b3: int, b2: int, b1: int, b0: int) -> Decimal:
     '''! Takes 4 bytes in IEEE 754 floating point format and converts it into a floating point
@@ -215,8 +216,13 @@ def float_to_signed_twos_complement_bytes(number: float) -> List[int]:
     if len(bin_str[1]) < 8:
         pad_b0 = 8 - len(bin_str[1])
 
+    pad_char = "0"
+
+    if number < 0:
+        pad_char = "1"
+
     for i in range(pad_b1):
-        bin_str[0] = "0" + bin_str[0]    
+        bin_str[0] = pad_char + bin_str[0]    
 
     for i in range(pad_b0):
         bin_str[1] += "0"
@@ -227,6 +233,31 @@ def float_to_signed_twos_complement_bytes(number: float) -> List[int]:
 
     return [b1, b0]
 
+def float_to_unsigned_decimal_bytes(number: float) -> List[int]:
+    '''! Converts a number in the range [0, 65535] to
+    a sixteen bit unsigned decimal representation b1b0.
+
+    @param number The floating point number to convert
+    @return A list [b1, b0] of bytes that when formatted as b1b0 is the binary
+    representation of the input number.
+    '''
+
+    if number < 0 or number > 65535:
+        raise ValueError(f'{number} is not in the range [0, 65535]')
+
+
+    b1 = int(number) >> 8 & 0xFF
+    b0 = int(number) & 0x00FF
+
+    return [b1, b0]
 
 if __name__ == '__main__':
-    a,b = float_to_signed_twos_complement_bytes(5)
+    b1, b0 = float_to_unsigned_decimal_bytes(7020.1)
+
+    b1,b0 = float_to_signed_twos_complement_bytes(-4.2)
+
+    print(b1, b0)
+
+
+    print(binary_fractions.TwosComplement(-4.2))
+    print(temperature_bytes_to_signed_twos_complement_decimal(251, 204))
