@@ -14,7 +14,7 @@
 # Third Party Library Imports
 ##
 from typing import Union
-from PyQt5.QtWidgets import QDialog, QLineEdit
+from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 
 ##
@@ -47,7 +47,6 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         # This may not be the greatest solution
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowTitle("Monitor SFP Parameters")
-
 
         self.lineEdit.setReadOnly(True)
         self.lineEdit_2.setReadOnly(True)
