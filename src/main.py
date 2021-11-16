@@ -20,6 +20,7 @@
 # Standard Library Imports
 ##
 import sys
+import logging
 
 
 ##
@@ -38,6 +39,10 @@ APPLICATION_VERSION = "0.2"
 
 def main():
 
+    fmt = '[%(asctime)s %(levelname)s]: %(message)s'
+    logging.basicConfig(level=logging.DEBUG, format=fmt, datefmt='%I:%M:%S')
+    logging.debug('Application started')
+
     # Create the Qt Application and an instance of the window class
     app = QApplication(sys.argv)
     app.setApplicationName(APPLICATION_NAME)
@@ -47,6 +52,7 @@ def main():
     main_window = Window()
     main_window.setWindowTitle('CloudPlug Control')
     main_window.show()
+
 
     sys.exit(app.exec_())
 
