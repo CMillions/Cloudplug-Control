@@ -4,8 +4,10 @@
 #
 ##
 
+import os
+import sys
+import time
 import unittest
-import sys, os, time
 
 # This is here to make the import work when ran from the main folder
 # in VSCode
@@ -168,6 +170,8 @@ def print_sfp_memory(sfp: SFP):
 
 
 if __name__ == '__main__':
+
+    unittest.main(verbosity=5)
 
     log_file = './log_file.txt'
     with open(log_file, 'w') as file:

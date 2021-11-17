@@ -7,19 +7,22 @@
 # @section file_author Author
 # - Created on 08/04/2021 by Connor DeCamp
 # @section mod_history Modification History
-# - None
+# - Modified on 11/04/2021 by Connor DeCamp
 ##
 
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage, QHeaderView, QListWidget, \
-                            QListWidgetItem, QTableWidgetItem, QMainWindow, QMenu, \
-                            QDialog
+from enum import Enum
+from typing import List
+
+from PyQt5.QtWidgets import QHeaderView, QListWidget, QTableWidgetItem, QDialog
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
 from modules.core.memory_map_dialog_autogen import Ui_Dialog
+from modules.core.create_stress_scenario_dialog import CreateStressScenarioDialog
 from modules.core.sfp import SFP
-from enum import Enum
-from typing import List
+
+from modules.network.sql_connection import SQLConnection
+
 
 class MemoryMapDialog(QDialog, Ui_Dialog):
 
@@ -53,8 +56,8 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         for i in range(16):
             header.setSectionResizeMode(i, QHeaderView.ResizeMode.ResizeToContents)
 
-        self.comboBox.activated[str].connect(self.changeTableDisplayMode)
-        self.comboBox_2.activated[str].connect(self.changeMemoryPage)
+        self.comboBox.activated[str].connect(self.change_table_display_mode)
+        self.comboBox_2.activated[str].connect(self.change_memory_page)
 
         self.selected_memory_page = 0xA0
 
@@ -65,13 +68,27 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         header = self.tableWidget_2.horizontalHeader()
 
         #header.sectionResized.connect(self.tableWidget_2.resizeRowsToContents)
+
+        ##
+        # Connect button slots
+        ##
+
+        self.addStressButton.clicked.connect(self._handle_add_stress_button_clicked)
         
         
 
 
-    def initializeTableValues(self, sfp_to_show: SFP):
+    def initialize_table_values(self, sfp_to_show: SFP):
+        '''! Initializes the characteristic table values.
         
+        @param sfp_to_show The SFP object to display information about.
+        '''
         self.associated_sfp = sfp_to_show
+
+        self.setWindowTitle(self.associated_sfp.get_vendor_name() + 
+            " " + self.associated_sfp.get_vendor_part_number() + 
+            " " + self.associated_sfp.get_vendor_serial_number()
+        )
 
         # Loop from [0, 255] and display memory map
         # values in hex by default
@@ -88,11 +105,49 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
             self.tableWidget.setItem(row, col, item_to_add)
         
         # Fill in the values on the characteristics page
-        self.generateCharacteristicsTable()
+        self.generate_characteristics_table()
 
+    def refresh_stress_scenario_table(self, sfp_id: int):
+        '''!Given a list of stress scenario tuples from the
+        database, fills out the table in this dialog.
         
+        '''
+        self.selected_sfp_id = sfp_id
 
-    def changeTableDisplayMode(self, selection: str):
+        sql_conn = SQLConnection()
+        cursor = sql_conn.get_cursor()
+
+        cursor.execute(f'SELECT * FROM stress_scenarios where sfp_id={self.selected_sfp_id}')
+
+        stress_scenarios_list = []
+        for res in cursor:
+            stress_scenarios_list.append(res)
+
+        sql_conn.close()
+
+        ##
+        # Database is formatted as
+        #
+        # Name         Column Number
+        # --------------------------
+        # stress_id         0
+        # sfp_id            1
+        # scenario_name     2
+        # values           3-22
+        ##
+        self.tableWidget_3.setRowCount(0)
+        for data in stress_scenarios_list:
+            scenario_name = data[2]
+            list_of_values = [val for val in data[3::]]
+
+            row_count = self.tableWidget_3.rowCount()
+            self.tableWidget_3.insertRow(row_count)
+            self.tableWidget_3.setItem(row_count, 0, QTableWidgetItem(str(scenario_name)))
+            self.tableWidget_3.setItem(row_count, 1, QTableWidgetItem(repr(list_of_values)))
+
+        self.tableWidget_3.resizeColumnsToContents()
+
+    def change_table_display_mode(self, selection: str):
 
         if selection == 'Hex' and self.selected_display_mode != self.DisplayType.HEX:
             self.selected_display_mode = self.DisplayType.HEX
@@ -105,10 +160,10 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
 
 
         self.tableWidget.setUpdatesEnabled(False)
-        self.updateTable()
+        self.update_table()
         self.tableWidget.setUpdatesEnabled(True)
 
-    def updateTable(self):
+    def update_table(self):
 
         memory_to_display = self.associated_sfp.memory_pages[self.selected_memory_page]
 
@@ -131,14 +186,14 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
             else:
                 raise Exception("ERROR:memory_map_dialog.py::Unknown display type for memory table.")
 
-    def changeMemoryPage(self, selection: str):
+    def change_memory_page(self, selection: str):
         self.selected_memory_page = int(selection, base=16)
-        self.updateTable()
+        self.update_table()
 
 
     # Functions for Characteristics tab
 
-    def generateCharacteristicsTable(self):
+    def generate_characteristics_table(self):
         '''
         Fills in the characteristics of the SFP module associated
         with the memory page being shown. The table fields come from
@@ -198,7 +253,23 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
 
         self.tableWidget_2.resizeRowsToContents()
 
+    ##
+    # Button Handlers
+    ##
 
+    def _handle_add_stress_button_clicked(self):
+
+        self.stress_dialog = CreateStressScenarioDialog(self, self.selected_sfp_id)
+        self.stress_dialog.refresh_stress_signal.connect(self.refresh_stress_scenario_table)
+        self.stress_dialog.show()
+
+        print('handler')
+
+
+
+    ##
+    # Overriden PyQT Methods
+    ##
     def closeEvent(self, event):
         self.deleteLater()
         event.accept()

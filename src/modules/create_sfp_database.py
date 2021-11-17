@@ -89,36 +89,63 @@ def main():
     
     mydb = mysql.connector.connect(
         host="localhost",
-        user="connord",
-        password="cloudplug",
+        user="connor",
+        password="cloudplug!@#@!",
         database="sfp_info"
     )
 
     mycursor = mydb.cursor()
 
-    create_table(mycursor)
-    create_page_table(mycursor, 'page_a0')
+
+    # Create table for stress scenarios
+    query = (
+        "CREATE TABLE `stress_scenarios` ("
+        "    `stress_id` INT AUTO_INCREMENT PRIMARY KEY,"
+        "    `sfp_id` INT,"
+        "    `scenario_name` VARCHAR(255),"
+        "    FOREIGN KEY (`sfp_id`) REFERENCES `page_a0`(`id`) ON DELETE CASCADE,"
+        "    FOREIGN KEY (`sfp_id`) REFERENCES `page_a2`(`id`) ON DELETE CASCADE,"
+    )
+    
+    # Need 1 byte for each value
+    num_vals = 19
+    for i in range(num_vals):
+        query += f'`{i}` INT, '
+
+    query += f'`{num_vals}` INT)'
+
+    #print(query)
+
+    #query = "INSERT INTO stress_scenarios (stress_id, sfp_id, scenario_name, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9) "
+
+    mycursor.execute(query)
+    mydb.commit()
+
+
+
+    #create_table(mycursor)
+    #create_page_table(mycursor, 'page_a0')
+    #create_page_table(mycursor, 'page_a2')
 
     #T= Testing insertion to database
-    sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
-    vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
-    mycursor.execute(sql, vals)
-    insert_sfp_data_to_table(mycursor, "sfp", list(vals))
-    mydb.commit()
-    print(mycursor.rowcount, "record inserted")
+    #sql = "INSERT INTO sfp (vendor_id, vendor_part_number, transceiver_type) VALUES (%s, %s, %s)"
+    #vals = ("Raspberry Pi", "unknown", "QFBR-576LP")
+    #mycursor.execute(sql, vals)
+    #insert_sfp_data_to_table(mycursor, "sfp", list(vals))
+    #print(mycursor.rowcount, "record inserted")
 
-    print("\n\nReading all entries from sfp table")
-    sql = "SELECT * from sfp"
-    mycursor.execute(sql)
+    #print("\n\nReading all entries from sfp table")
+    #sql = "SELECT * from sfp"
+    #mycursor.execute(sql)
 
-    myresult = mycursor.fetchall()
+    #myresult = mycursor.fetchall()
 
-    for x in myresult:
-        print(x)
+    #for x in myresult:
+    #    print(x)
 
-    print('\n\nReading sfp memory')
-    memory_map = read_sfp_memory_map('sfp3.bin')
-    print(f'Length is {len(memory_map)}')
+    #print('\n\nReading sfp memory')
+    #memory_map = read_sfp_memory_map('sfp3.bin')
+    #print(f'Length is {len(memory_map)}')
 
     '''
     memory_map2 = []

@@ -1,8 +1,6 @@
-
 ##
 # @file sfp.py
-# @brief Module for interpreting the memory maps of SFP+ devices. See
-#        SFF-8472 standard for more information.
+# @brief Module for interpreting the memory maps of SFP+ devices.
 # @section file_author Author
 # - Created by Connor DeCamp on 07/15/2021
 # @section mod_history Modification History
@@ -13,50 +11,42 @@
 # - Modified by Connor DeCamp on 07/29/2021
 # - Modified by Connor DeCamp on 10/01/2021
 # - Modified by Connor DeCamp on 10/18/2021
+# - Modified by Connor DeCamp on 10/20/2021
+# - Modified by Connor DeCamp on 10/27/2021
 ##
-
-
-# Author:       Connor DeCamp
-# Created on:   07/15/2021
-#
-# History:      07/19/2021 - Added more getters for page a0
-#               07/20/2021 - Finished getters for page a0
-#               07/27/2021 - Started getters for page a2
-#               07/28/2021 - Continued work on getters for page a2
-#               07/29/2021 - Moved conversions to convert.py
-#               10/01/2021 - Fixed get_transceiver() method
-#
-# See SFF-8472 for tables that determine what each
-# value means in the memory map.
 
 from typing import List
 from modules.core.convert import *
 from enum import Enum
 
 class SFP:
-    '''
+    '''! Class used for interpreting EEPROM values of SFP+ modules.
     Has two lists of integers that represent the memory map
-    of SFP/SFP+ modules. The provided getter methods can return any
-    information about the module, including vendor information, diagnostic
-    monitoring support, and alarm/warning thresholds.
+    of SFP/SFP+ modules. These are referred to by the I2C address of
+    the memory, 0xA0 and 0xA2. These are sometimes referred to as 0x50 and 0x51,
+    respective. The change is due to the 7-bit addressing supported by SFP+ modules.
     '''
 
     # Enumeration for SFP Diagnostic Monitoring types,
     # whether values are internally or externally calibrated
     class CalibrationType(Enum):
+        '''! Enumeration for SFP+ calibration types. Modules can
+        be either internally and externally calibrated.
+        '''
         UNKNOWN = 0,
         INTERNAL = 1,
         EXTERNAL = 2
 
-    # Holds the data values from page 0xA0 of the SFP memory map
+    ## Holds the data values from page 0xA0 of the SFP memory map
     page_a0 : List[int]
 
-    # Holds the data values from page 0xA2 of the SFP memory map
+    ## Holds the data values from page 0xA2 of the SFP memory map
     page_a2 : List[int]
 
+    ## Dictionary of memory pages
     memory_pages: dict
 
-    # Holds the calibration type of the module
+    ## Holds the calibration type of the module
     calibration_type: CalibrationType = CalibrationType.UNKNOWN
 
     def __init__(self, page_a0: List[int], page_a2: List[int]):
@@ -718,11 +708,11 @@ class SFP:
         # Not sure if this is correct. The standard says it's
         # all ASCII codes so it shouldn't matter. I'm just formatting it
         # nicely
-        year = f'{self.page_a0[84]}{self.page_a0[85]}'
-        month = f'{self.page_a0[86]}{self.page_a0[87]}'
-        day = f'{self.page_a0[88]}{self.page_a0[89]}'
+        year = f'{chr(self.page_a0[84])}{chr(self.page_a0[85])}'
+        month = f'{chr(self.page_a0[86])}{chr(self.page_a0[87])}'
+        day = f'{chr(self.page_a0[88])}{chr(self.page_a0[89])}'
 
-        extra_code = f'{self.page_a0[90]}{self.page_a0[91]}'
+        extra_code = f'{chr(self.page_a0[90])}{chr(self.page_a0[91])}'
 
         date = f'{month}/{day}/{year}\t{extra_code}'
         return date
@@ -887,7 +877,7 @@ class SFP:
         # and OR it with the rest of the number
         b1 = self.page_a2[0]
         b0 = self.page_a2[1]
-        return bytes_to_signed_twos_complement_decimal(b1, b0)
+        return temperature_bytes_to_signed_twos_complement_decimal(b1, b0)
 
     def get_temp_low_alarm(self) -> int:
         '''
@@ -895,7 +885,7 @@ class SFP:
         being too low. This value is not calibrated.
         '''
         print(f'{self.page_a2[2]}..{self.page_a2[3]}')
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[2], self.page_a2[3])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[2], self.page_a2[3])
     
     def get_temp_high_warning(self) -> int:
         '''
@@ -903,7 +893,7 @@ class SFP:
         being too high. This value is not calibrated.
         '''
 
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[4], self.page_a2[5])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[4], self.page_a2[5])
 
     def get_temp_low_warning(self) -> int:
         '''
@@ -911,7 +901,7 @@ class SFP:
         being too low. This value is not calibrated.
         '''
 
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[6], self.page_a2[7])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[6], self.page_a2[7])
 
     def get_voltage_high_alarm(self) -> int:
         '''
@@ -1038,28 +1028,28 @@ class SFP:
         Gets the high alarm threshold for the optional laser
         temperature. Uncalibrated
         '''
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[40], self.page_a2[41])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[40], self.page_a2[41])
 
     def get_optional_laser_temp_low_alarm(self) -> int:
         '''
         Gets the low alarm threshold for the optional laser
         temperature. Uncalibrated
         '''
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[42], self.page_a2[43])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[42], self.page_a2[43])
     
     def get_optional_laser_temp_high_warning(self) -> int:
         '''
         Gets the high warning threshold for the optional laser
         temperature. Uncalibrated.
         '''
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[44], self.page_a2[45])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[44], self.page_a2[45])
 
     def get_optional_laser_temp_low_warning(self) -> int:
         '''
         Gets the low warning threshold for the optional laser
         temperature.
         '''
-        return bytes_to_signed_twos_complement_decimal(self.page_a2[46], self.page_a2[47])
+        return temperature_bytes_to_signed_twos_complement_decimal(self.page_a2[46], self.page_a2[47])
     
     def get_optional_tec_current_high_alarm(self) -> int:
         '''
@@ -1100,7 +1090,7 @@ class SFP:
         power. Bit 7 of byte 56 is MSB. Bit 0 of byte 59 is LSB. Rx_PWR(4)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[56], self.page_a2[57], 
             self.page_a2[58], self.page_a2[59]
         )
@@ -1111,7 +1101,7 @@ class SFP:
         power. Bit 7 of byte 60 is MSB. Bit 0 of byte 63 is LSB. Rx_PWR(3)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[60], self.page_a2[61],
             self.page_a2[62], self.page_a2[63]
         )
@@ -1122,7 +1112,7 @@ class SFP:
         power. Bit 7 of byte 64 is MSB. Bit 0 of byte 67 is LSB. Rx_PWR(2)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[64], self.page_a2[65],
             self.page_a2[66], self.page_a2[67]
         )
@@ -1134,7 +1124,7 @@ class SFP:
         should be set to zero for 'internally calibrated' devices.
 
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[68], self.page_a2[69],
             self.page_a2[70], self.page_a2[71]
         )
@@ -1145,7 +1135,7 @@ class SFP:
         power. Bit 7 of byte 72 is MSB. Bit 0 of byte 75 is LSB. Rx_PWR(0)
         should be set to zero for 'internally calibrated' devices.
         '''
-        return ieee754_to_int(
+        return ieee754_to_decimal(
             self.page_a2[72], self.page_a2[73],
             self.page_a2[74], self.page_a2[75]
         )
@@ -1185,7 +1175,7 @@ class SFP:
         Bit 7 of byte 76 is MSB, bit 0 of byte 77 is LSB. Tx_I(slope)
         should be set to 1 for 'internally calibrated' devices.
         """
-        return bytes_to_unsigned_decimal(self.page_a2[76], self.page_a2[77])
+        return slope_bytes_to_unsigned_decimal(self.page_a2[76], self.page_a2[77])
 
     def get_tx_i_offset(self) -> int:
         '''
@@ -1193,7 +1183,7 @@ class SFP:
         current. Bit 7 of byte 78 is MSB, bit 0 of byte 79 is LSB.
         Tx_I(Offset) should be set to zero for "internally calibrated' devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[78], self.page_a2[79])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[78], self.page_a2[79])
 
     def get_tx_pwr_slope(self) -> int:
         '''
@@ -1201,7 +1191,7 @@ class SFP:
         output power. Bit 7 of byte 80 is MSB, bit 0 of byte 81 is LSB. Tx_PWR(slope)
         should be set to 1 for 'internally calibrated' devices.
         '''
-        return bytes_to_unsigned_decimal(self.page_a2[80], self.page_a2[81])
+        return slope_bytes_to_unsigned_decimal(self.page_a2[80], self.page_a2[81])
 
     def get_tx_pwr_offset(self) -> int:
         '''
@@ -1209,7 +1199,7 @@ class SFP:
         coupled output power. Bit 7 of byte 82 is MSB, bit 0 of byte 83 is LSB.
         Tx_PWR(Offset) should be set to zero for "internally calibrated" devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[82], self.page_a2[83])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[82], self.page_a2[83])
     
     def get_temp_slope(self) -> int:
         '''
@@ -1217,7 +1207,7 @@ class SFP:
         Bit 7 of byte 84 is MSB, bit 0 of byte 85 is LSB. T(Slope) should be set to
         1 for "internally calibrated" devices.
         '''
-        return bytes_to_unsigned_decimal(self.page_a2[84], self.page_a2[85])
+        return slope_bytes_to_unsigned_decimal(self.page_a2[84], self.page_a2[85])
 
     def get_temp_offset(self) -> int:
         '''
@@ -1225,7 +1215,7 @@ class SFP:
         Bit 7 of byte 86 is MSB, bit 0 of byte 87 is LSB. T(Offset) should be set to
         0 for "internally calibrated" devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[86], self.page_a2[87])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[86], self.page_a2[87])
 
     def get_voltage_slope(self) -> int:
         '''
@@ -1233,7 +1223,7 @@ class SFP:
         Bit 7 of byte 88 is MSB, bit 0 of byte 89 is LSB. V(Slope) should be set to
         1 for "internally calibrated" devices.
         '''
-        return bytes_to_unsigned_decimal(self.page_a2[88], self.page_a2[89])
+        return slope_bytes_to_unsigned_decimal(self.page_a2[88], self.page_a2[89])
 
     def get_voltage_offset(self) -> int:
         '''
@@ -1241,7 +1231,7 @@ class SFP:
         Bit 7 of byte 90 is MSB, bit 0 of byte 91 is LSB. V(Offset) should be set to
         0 for "internally calibrated" devices.
         '''
-        return signed_twos_complement_to_int(self.page_a2[90], self.page_a2[91])
+        return offset_bytes_to_signed_twos_complement_int(self.page_a2[90], self.page_a2[91])
 
     def get_reserved_a2_bytes(self) -> int:
         return f'{self.page_a2[92:94 + 1]}'
@@ -1265,7 +1255,7 @@ class SFP:
         msb = self.page_a2[96]
         lsb = self.page_a2[97]
 
-        converted_val = bytes_to_signed_twos_complement_decimal(msb, lsb)
+        converted_val = temperature_bytes_to_signed_twos_complement_decimal(msb, lsb)
 
         if self.calibration_type == self.CalibrationType.INTERNAL:
             return Decimal(converted_val)
@@ -1308,13 +1298,13 @@ class SFP:
                    self.get_rx_pwr_2() * value + self.get_rx_pwr_1() * value + \
                    self.get_rx_pwr_0())
         else:
-            raise Exception("ERROR:SFP::get_rx_pwr() - Unknown calibration type")
+            print("ERROR:SFP::get_rx_pwr() - Unknown calibration type")
 
     def get_laser_temp_or_wavelength(self) -> float:
         msb = self.page_a2[106]
         lsb = self.page_a2[107]
 
-        converted_val = bytes_to_signed_twos_complement_decimal(msb, lsb)
+        converted_val = temperature_bytes_to_signed_twos_complement_decimal(msb, lsb)
 
         if self.calibration_type == self.CalibrationType.INTERNAL:
             return Decimal(converted_val)
@@ -1337,5 +1327,9 @@ class SFP:
             offset = 0.0
 
         return Decimal(slope) * Decimal(num) + Decimal(offset)
+
+
+    def __repr__(self):
+        return f'{self.get_vendor_name()}-{self.get_vendor_part_number()}-{self.get_vendor_serial_number()}-{self.get_wavelength()}nm'
 
 # END sfp.py

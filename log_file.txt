@@ -1,4 +1,4 @@
-Tests ran on 10/19/2021 at 13:10
+Tests ran on 10/22/2021 at 05:06
 ================================
 
 test_get_connector_type (__main__.TestSFPMethods) ... ok
@@ -21,6 +21,6 @@ test_get_vendor_revision_level (__main__.TestSFPMethods) ... ok
 test_get_wavelength (__main__.TestSFPMethods) ... ok
 
 ----------------------------------------------------------------------
-Ran 18 tests in 0.006s
+Ran 18 tests in 0.001s
 
 OK
