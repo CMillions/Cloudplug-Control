@@ -10,7 +10,7 @@ This is the Control Software for Team 1282's UT Dallas ECE capstone project for 
 - Nguyen Nguyen
 - DongHyun Seo
 ### Computer Engineering
-- Connor DeCamp (code author)
+- Connor DeCamp
 
 # Project Abstract
 SFP+ modules can transmit data at high speeds using many different types of cables. There are hundreds of different SFP+ modules from different vendors, and, theoretically, most of them should follow a standard. On each module is an EEPROM chip that stores vendor and diagnostic information which is used by a host to identify the device. However, not every module works with every host system. This leads to customers asking system vendors to support different SFP+ modules, which leads to dozens of software variants, test cases, and combinations per host-system. The issue is that each qualification test requires a person to physically insert and remove the module. This limits testing to a small number of switches featuring the SFP+ modules under test. Thus, qualification testing requires physical access to a limited resource which is time consuming. 
