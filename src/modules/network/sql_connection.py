@@ -15,6 +15,7 @@
 # Standard Imports
 ##
 import os
+import logging
 
 ##
 # Third Party Library Imports
@@ -43,7 +44,8 @@ class SQLConnection:
         self.get_connection()
 
     def get_connection(self):
-        ''' @brief Uses the .env file to read out the database information.
+        '''! Gets a connection object to the database 
+        @brief Uses a .env file to connect to a database
         '''
         
         db_host = os.getenv('DB_HOST')
@@ -54,7 +56,7 @@ class SQLConnection:
         try:
             #print(f'{db_host = }\t{db_user = }\t{db_pass = }')
             TIMEOUT_SEC = 5
-            print(f"Trying to connect to database with timeout: {TIMEOUT_SEC} seconds")
+            logging.debug(f"Trying to connect to database with timeout: {TIMEOUT_SEC} seconds")
             self.connection = mysql.connector.connect(
                 host=db_host,
                 user=db_user,
@@ -63,13 +65,12 @@ class SQLConnection:
                 connection_timeout=TIMEOUT_SEC,
                 autocommit=True
             )
-            print('Connected')
+            logging.debug(f'Connected to db name: {db_name}')
 
             self.cursor = self.connection.cursor()
 
         except Exception as ex:
-            print('Error connecting to SFP database')
-            print(ex)
+            logging.error(f'Error connecting to SFP database: {ex}')
             self.connection = None
             self.cursor = None
             raise Exception(ex)
@@ -80,6 +81,8 @@ class SQLConnection:
     def close(self):
         if self.connection is not None:
             self.connection.close()
+
+            logging.debug("Closed connection to database")
 
     def __del__(self):
         self.close()

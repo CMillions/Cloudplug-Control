@@ -173,7 +173,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         byte_list.append(b1)
         byte_list.append(b0)
 
-        print(byte_list)
+        #print(byte_list)
 
         # Now we need to convert each value into byte format
         # This depends on the type of stress scenario the user
@@ -197,7 +197,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         values = (0, self.selected_sfp_id, str(self.nameLineEdit.text())) + tuple(byte_list)
 
 
-        print(query, values)
+        #print(query, values)
 
         cursor.execute(query, values)
 

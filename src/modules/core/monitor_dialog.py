@@ -10,11 +10,13 @@
 # - Modified on 10/21/2021 by Connor DeCamp
 ##
 
+import logging
+
 ##
 # Third Party Library Imports
 ##
 from typing import Union
-from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout
+from PyQt5.QtWidgets import QDialog, QLineEdit
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 
 ##
@@ -22,6 +24,8 @@ from PyQt5.QtCore import QTimer, Qt, pyqtSignal
 ##
 from modules.core.monitor_dialog_autogen import Ui_Dialog
 from modules.core.sfp import *
+
+from modules.core.diagnostic_plot import DiagnosticData, DiagnosticPlotWidget
 
 class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
 
@@ -48,6 +52,9 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowTitle("Monitor SFP Parameters")
 
+
+        self.diagnostic_plot_window = DiagnosticPlotWidget()
+
         self.lineEdit.setReadOnly(True)
         self.lineEdit_2.setReadOnly(True)
         self.lineEdit_3.setReadOnly(True)
@@ -69,7 +76,14 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
 
         self.timer = QTimer()
         self.timer.timeout.connect(self._emit_command_restart_timer)
-        
+
+        self.pushButton.clicked.connect(self.x)
+
+    def x(self):
+        logging.debug("Aaaaaa")
+        self.diagnostic_plot_window.show()
+        self.diagnostic_plot_window.raise_()
+
     def update_alarm_warning_tab(self):
         
         sfp_ptr = self.associated_sfp
@@ -126,7 +140,26 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         # light blue:  > alarm low
         # dark blue:   <= alarm low
 
+
         temperature = sfp.get_temperature()
+        vcc = sfp.get_vcc() / Decimal(10000.0)
+        tx_bias = sfp.get_tx_bias_current() * Decimal(2 * 10**-3)
+        tx_pwr = sfp.get_tx_power() * Decimal(0.1)
+        rx_pwr = sfp.calculate_rx_power_uw() * Decimal(0.1)
+
+        data_to_plot = DiagnosticData(
+            150,
+            3.5,
+            6.42,
+            0,
+            0.1
+        )
+
+        if not self.diagnostic_plot_window.isHidden():
+            logging.debug("handle new data")
+            self.diagnostic_plot_window.handle_new_data(data_to_plot)
+
+
         self.temperatureLineEdit.setText(f'{temperature:.3f}')
         self._update_color_indicator(
             float(self.temperatureLineEdit.text()), 
@@ -137,7 +170,7 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
             self.temperatureLineEdit
         )
 
-        self.vccLineEdit.setText(f'{sfp.get_vcc() / Decimal(10000.0):.3f}')
+        self.vccLineEdit.setText(f'{vcc:.3f}')
         self._update_color_indicator(
             float(self.vccLineEdit.text()),
             float(self.vccHighAlarmLineEdit.text()),
@@ -147,7 +180,7 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
             self.vccLineEdit
         )
 
-        self.txBiasCurrentLineEdit.setText(f'{sfp.get_tx_bias_current() * Decimal(2 * 10**-3):.3f}')
+        self.txBiasCurrentLineEdit.setText(f'{tx_bias:.3f}')
         self._update_color_indicator(
             float(self.txBiasCurrentLineEdit.text()),
             float(self.txBiasHighAlarmLineEdit.text()),
@@ -157,7 +190,7 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
             self.txBiasCurrentLineEdit
         )
 
-        self.txPowerLineEdit.setText(f'{sfp.get_tx_power() * Decimal(0.1):.3f}')
+        self.txPowerLineEdit.setText(f'{tx_pwr:.3f}')
         self._update_color_indicator(
             float(self.txPowerLineEdit.text()),
             float(self.txPowerHighAlarmLineEdit.text()),
@@ -167,7 +200,7 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
             self.txPowerLineEdit
         )
 
-        self.rxPowerLineEdit.setText(f'{sfp.calculate_rx_power_uw() * Decimal(0.1):.3f}')
+        self.rxPowerLineEdit.setText(f'{rx_pwr:.3f}')
         self._update_color_indicator(
             float(self.rxPowerLineEdit.text()),
             float(self.rxPowerHighAlarmLineEdit.text()),
@@ -256,4 +289,5 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
     ##
     def closeEvent(self, event):
         self.timer.stop()
+        self.diagnostic_plot_window.close()
         event.accept()

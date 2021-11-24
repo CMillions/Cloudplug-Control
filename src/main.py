@@ -35,11 +35,11 @@ from modules.core.window import Window
 
 APPLICATION_NAME = "CloudPlug Control"
 APPLICATION_DISPLAY_NAME = "CloudPlug Control"
-APPLICATION_VERSION = "0.2"
+APPLICATION_VERSION = "0.01"
 
 def main():
 
-    fmt = '[%(asctime)s %(levelname)s]: %(message)s'
+    fmt = '[%(asctime)s | %(levelname)s]: %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=fmt, datefmt='%I:%M:%S')
     logging.debug('Application started')
 

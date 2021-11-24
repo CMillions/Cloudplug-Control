@@ -15,12 +15,12 @@
 ##
 import time
 from typing import Tuple
+import logging
 
 ##
 # Third Party Library Imports
 ##
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage,\
                             QListWidgetItem, QPlainTextEdit,\
                             QTableWidgetItem, QMainWindow
@@ -223,7 +223,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # Check to see if the user has selected at least one cloudplug
         selected_cloudplugs = self.listWidget.selectedItems()
-        print(f'User has selected {len(selected_cloudplugs)} cloudplugs')
+        logging.debug(f'User has selected {len(selected_cloudplugs)} cloudplugs')
 
         # If the user has not selected anything, show an error message and
         # return from this method
@@ -270,11 +270,11 @@ class Window(QMainWindow, Ui_MainWindow):
 
         if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
             self.append_to_debug_log(f"Discovered DOCKING STATION at {sender_ip}:{sender_port}")
-            print(f"Emitting DOCK {sender_ip}")
+            logging.debug(f"Emitting DOCK {sender_ip}")
             self.dock_discover_signal.emit(sender_ip)
         elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
             self.append_to_debug_log(f"Discovered CLOUDPLUG at {sender_ip}:{sender_port}")
-            print(f"Emitting CLOUDPLUG {sender_ip}")
+            logging.debug(f"Emitting CLOUDPLUG {sender_ip}")
             self.cloudplug_discover_signal.emit(sender_ip)
         else:
             self.append_to_debug_log(f"Unknown data from {sender_ip}:{sender_port}")
@@ -358,6 +358,11 @@ class Window(QMainWindow, Ui_MainWindow):
             self.readSfpMemoryButton.setEnabled(True)
 
     def _refresh_sfp_table(self):
+        '''! Refreshes the SFP table on the main screen.
+
+        @brief Accesses the SFP database to refresh all of the available
+        personas.
+        '''
         sql_statement = "SELECT * FROM page_a0"
         self.append_to_debug_log(f"Executing SQL STATEMENT: {sql_statement}")
         
@@ -377,12 +382,11 @@ class Window(QMainWindow, Ui_MainWindow):
     def display_monitor_dialog(self):
         '''! Function to display the diagnostic monitoring dialog.
 
-            @brief If the user has selected a connected Docking Station,
-            it opens a diagnostic monitoring dialog that allows the user
-            to see the diagnostics of the SFP module.
+        @brief If the user has selected a connected Docking Station,
+        it opens a diagnostic monitoring dialog that allows the user
+        to see the diagnostics of the SFP module.
         '''
         selected_items = self.dockingStationList.selectedItems()
-        self.diagnostic_monitor_dialog.show()
         
         if len(selected_items) != 1:
             error_msg = QErrorMessage()
@@ -523,7 +527,7 @@ class Window(QMainWindow, Ui_MainWindow):
         This is an reimplemented PyQT function to modify the behavior
         of the closeEvent slot.
         '''
-        print("Closing the window")
+        logging.debug("Closing the window")
         self.kill_signal.emit(-1)
         self.tcp_thread.exit()
         self.udp_thread.exit()
@@ -534,7 +538,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
             @param text The text to be added to the debug log.
         '''
-        
+        logging.debug(text)
         # Select the text-edit widget on the debug tab
         text_edit = self.logTab.findChild(QPlainTextEdit, 'plainTextEdit')
 
