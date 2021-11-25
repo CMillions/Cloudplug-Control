@@ -137,7 +137,16 @@ class Window(QMainWindow, Ui_MainWindow):
         self.diagnostic_monitor_dialog.timed_command.connect(self.handle_diagnostic_timer_timeout)
         
         # Populate the table when the application opens
-        self._refresh_sfp_table()
+        try:
+            self._refresh_sfp_table()
+        except Exception as ex:
+            logging.error(f'{ex}')
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage(f'{ex}')
+            error_dialog.exec()
+            self.kill_signal.emit(-1)
+            time.sleep(2)
+            raise ex
 
     def connect_signal_slots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
@@ -530,7 +539,9 @@ class Window(QMainWindow, Ui_MainWindow):
         logging.debug("Closing the window")
         self.kill_signal.emit(-1)
         self.tcp_thread.exit()
+        logging.debug("Killed TCP thread")
         self.udp_thread.exit()
+        logging.debug("Killed UDP thread")
         event.accept()
 
     def append_to_debug_log(self, text: str):

@@ -200,6 +200,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         #print(query, values)
 
         cursor.execute(query, values)
+        sql_connection.close()
 
         self.refresh_stress_signal.emit(self.selected_sfp_id)
         self.close()
