@@ -263,8 +263,6 @@ class MemoryMapDialog(QDialog, Ui_Dialog):
         self.stress_dialog.refresh_stress_signal.connect(self.refresh_stress_scenario_table)
         self.stress_dialog.show()
 
-        print('handler')
-
 
 
     ##

@@ -256,8 +256,8 @@ if __name__ == '__main__':
 
     b1,b0 = float_to_signed_twos_complement_bytes(-4.2)
 
-    print(b1, b0)
+    #print(b1, b0)
 
 
-    print(binary_fractions.TwosComplement(-4.2))
-    print(temperature_bytes_to_signed_twos_complement_decimal(251, 204))
+    #print(binary_fractions.TwosComplement(-4.2))
+    #print(temperature_bytes_to_signed_twos_complement_decimal(251, 204))

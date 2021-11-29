@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'resources/ui_files/monitor_dialog.ui'
+# Form implementation generated from reading ui file './resources/ui_files/monitor_dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.14.1
 #
@@ -142,6 +142,9 @@ class Ui_Dialog(object):
         self.rxPowerLineEdit = QtWidgets.QLineEdit(self.tab)
         self.rxPowerLineEdit.setObjectName("rxPowerLineEdit")
         self.gridLayout_5.addWidget(self.rxPowerLineEdit, 5, 1, 1, 1)
+        self.pushButton = QtWidgets.QPushButton(self.tab)
+        self.pushButton.setObjectName("pushButton")
+        self.gridLayout_5.addWidget(self.pushButton, 5, 3, 1, 1)
         self.gridLayout_3.addLayout(self.gridLayout_5, 5, 0, 1, 2)
         self.label = QtWidgets.QLabel(self.tab)
         font = QtGui.QFont()
@@ -371,6 +374,7 @@ class Ui_Dialog(object):
         self.vccLabel.setText(_translate("Dialog", "Vcc (V)"))
         self.label_7.setText(_translate("Dialog", "Laser Temperature/Wavelength"))
         self.rxPowerLabel.setText(_translate("Dialog", "RX Power (uW)"))
+        self.pushButton.setText(_translate("Dialog", "View Plots"))
         self.label.setText(_translate("Dialog", "Module Vendor Name"))
         self.label_2.setText(_translate("Dialog", "Module Part Number"))
         self.label_5.setText(_translate("Dialog", "SFP+ Vendor Information"))
