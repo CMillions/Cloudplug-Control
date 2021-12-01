@@ -17,7 +17,6 @@
 from decimal import *
 from typing import List
 import binary_fractions
-from binary_fractions import binary
 
 def ieee754_to_decimal(b3: int, b2: int, b1: int, b0: int) -> Decimal:
     '''! Takes 4 bytes in IEEE 754 floating point format and converts it into a floating point
