@@ -18,6 +18,7 @@ import logging
 from typing import Union
 from PyQt5.QtWidgets import QDialog, QLineEdit
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
+from sip import voidptr
 
 ##
 # Local Library Imports
@@ -148,11 +149,13 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
         rx_pwr = sfp.calculate_rx_power_uw() * Decimal(0.1)
 
         data_to_plot = DiagnosticData(
-            150,
-            3.5,
-            6.42,
+            float(temperature),
+            float(vcc),
+            float(tx_bias),
+            float(tx_pwr),
+            float(rx_pwr),
             0,
-            0.1
+            0
         )
 
         if not self.diagnostic_plot_window.isHidden():
@@ -289,5 +292,6 @@ class DiagnosticMonitorDialog(QDialog, Ui_Dialog):
     ##
     def closeEvent(self, event):
         self.timer.stop()
+        self.diagnostic_plot_window.clear_plots()
         self.diagnostic_plot_window.close()
         event.accept()

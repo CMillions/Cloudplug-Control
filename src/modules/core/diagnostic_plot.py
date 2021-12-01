@@ -104,11 +104,7 @@ class DiagnosticPlotWidget(QWidget):
         self.tx_power_values= []
 
         self.domain_limit = 30
-        self.temperature_plot.setXRange(0, self.domain_limit)
-        self.vcc_plot.setXRange(0, self.domain_limit)
-        self.tx_bias_plot.setXRange(0, self.domain_limit)
-        self.rx_power_plot.setXRange(0, self.domain_limit)
-        self.tx_power_plot.setXRange(0, self.domain_limit)
+        self._change_domain(0, 30)
 
         ##
         # Plot ranges change
@@ -128,11 +124,11 @@ class DiagnosticPlotWidget(QWidget):
         # TEC current is [-3276.8, 3276.8] mA
         ##
 
-        self.temperature_plot.setYRange(-128, 128)
-        self.vcc_plot.setYRange(0, 7)
-        self.tx_bias_plot.setYRange(0, 135)
-        self.rx_power_plot.setYRange(0, 7)
-        self.tx_power_plot.setYRange(0, 7)
+        #self.temperature_plot.setYRange(-128, 128)
+        #self.vcc_plot.setYRange(0, 7)
+        #self.tx_bias_plot.setYRange(0, 135)
+        #self.rx_power_plot.setYRange(0, 7)
+        #self.tx_power_plot.setYRange(0, 7)
 
     def _create_plot(self, title: str, x_label: str, y_label:str) -> pg.PlotWidget:
         '''! Creates a PlotWidget object for specific use in this module.
@@ -198,8 +194,22 @@ class DiagnosticPlotWidget(QWidget):
         formatted_data = formatted_data.transpose()
         self.tx_power_plot_data.setData(formatted_data)
 
-        self.timer.start(1000)
+    def clear_plots(self) -> None:
+        self.temperature_values = []
+        self.vcc_values = []
+        self.tx_bias_values = []
+        self.tx_power_values = []
+        self.rx_power_values = []
+        
+        self.domain_limit = 30
+        self._change_domain(0, self.domain_limit)
 
+    def _change_domain(self, lower_bound: int, upper_bound: int) -> None:
+        self.temperature_plot.setXRange(lower_bound, upper_bound)
+        self.vcc_plot.setXRange(lower_bound, upper_bound)
+        self.tx_bias_plot.setXRange(lower_bound, upper_bound)
+        self.rx_power_plot.setXRange(lower_bound, upper_bound)
+        self.tx_power_plot.setXRange(lower_bound, upper_bound)
 
 if __name__ == '__main__':
 

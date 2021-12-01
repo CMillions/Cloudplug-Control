@@ -76,12 +76,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.worker.device_response.connect(self.handle_udp_client_message)
         self.udp_thread.started.connect(self.worker.on_thread_start)
         self.kill_signal.connect(self.worker.cleanup)
-        self.udp_thread.start()
-
-        #udp_thread = BroadcastThread()
-        #udp_thread.device_response.connect(self.handleUdpClientMessage)
-        #self.kill_signal.connect(udp_thread.main_window_close_event_handler)
-        #udp_thread.start()
 
         
         
@@ -89,6 +83,11 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_thread = QtCore.QThread()
         self.tcp_server = TCPServer()
         self.tcp_server.moveToThread(self.tcp_thread)
+
+        self.worker.dock_discover_signal.connect(self.tcp_server.init_dock_connection)
+        self.worker.cloudplug_discover_signal.connect(self.tcp_server.init_cloudplug_connection)
+
+
         self.tcp_server.client_connected_signal.connect(self.handle_tcp_client_connect)
         self.tcp_server.client_disconnected_signal.connect(self.handle_tcp_client_disconnect)
         self.tcp_server.update_ui_signal.connect(self.handle_update_ui_signal)
@@ -99,13 +98,12 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_server.real_time_refresh_signal.connect(self.handle_real_time_refresh)
         self.tcp_server.remote_io_error_signal.connect(self.handle_remote_io_error)
 
-        self.dock_discover_signal.connect(self.tcp_server.init_dock_connection)
-        self.cloudplug_discover_signal.connect(self.tcp_server.init_cloudplug_connection)
+        #self.dock_discover_signal.connect(self.tcp_server.init_dock_connection)
+        #self.cloudplug_discover_signal.connect(self.tcp_server.init_cloudplug_connection)
         self.send_command_signal.connect(self.tcp_server.handle_send_command_signal)
         self.kill_signal.connect(self.tcp_server._close_all_connections)
         
         self.tcp_thread.started.connect(self.tcp_server.open_session)
-        self.tcp_thread.start()
 
         # This code was commented out in favor of the above code.
         # There is no more need for a class that subclasses the QThread
@@ -147,6 +145,10 @@ class Window(QMainWindow, Ui_MainWindow):
             self.kill_signal.emit(-1)
             time.sleep(2)
             raise ex
+
+        self.udp_thread.start()
+        self.tcp_thread.start()
+        
 
     def connect_signal_slots(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
@@ -263,8 +265,11 @@ class Window(QMainWindow, Ui_MainWindow):
             msg_tuple = (cloudplug_ip, msg)
             self.send_command_signal.emit(msg_tuple)
 
-    def handle_udp_client_message(self, contents_ip_port_tuple: Tuple):
+    def handle_udp_client_message(self, data: object):
         '''! Handles the message from a UDP client.'''
+        
+        self.append_to_debug_log(data)
+        '''
         raw_data = contents_ip_port_tuple[0]
         sender_ip = contents_ip_port_tuple[1].toString()
         sender_port = contents_ip_port_tuple[2]
@@ -287,6 +292,7 @@ class Window(QMainWindow, Ui_MainWindow):
             self.cloudplug_discover_signal.emit(sender_ip)
         else:
             self.append_to_debug_log(f"Unknown data from {sender_ip}:{sender_port}")
+        '''
 
     def clone_sfp_memory_button_handler(self):
         '''! Method that handles when the "Clone SFP Memory" button is

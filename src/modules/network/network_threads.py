@@ -12,11 +12,12 @@
 
 import time
 from typing import List
+import logging
 
 from PyQt5.QtCore import QObject, QThread, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress
 
-from modules.network.message import MESSAGE_BYTES, Message, MessageCode
+from modules.network.message import MESSAGE_BYTES, Message, MessageCode, bytes_to_message
 from modules.network.tcp_server import TCPServer
 from modules.network.utility import *
 
@@ -30,7 +31,8 @@ class BroadcastWorker(QObject):
     '''
     # This signal is emitted when a UDP response is received
     device_response = pyqtSignal(object)
-
+    dock_discover_signal = pyqtSignal(object)
+    cloudplug_discover_signal = pyqtSignal(object)
     
 
     def on_thread_start(self):
@@ -67,6 +69,8 @@ class BroadcastWorker(QObject):
         msg = Message(MessageCode.DISCOVER, "DISCOVER")
 
         self._sock.writeDatagram(QByteArray(msg.to_bytes()), self._broadcast_address, self._port)
+        # Give a bit of time for messages to arrive
+        time.sleep(0.5)
         while self._sock.hasPendingDatagrams():
             msg_tuple = self._sock.readDatagram(MESSAGE_BYTES)
 
@@ -76,7 +80,18 @@ class BroadcastWorker(QObject):
 
             # If the sender's IP address is not our local address
             if sender_ip_addr != self._bind_address.toString():
-                self.device_response.emit(msg_tuple)
+                #self.device_response.emit(msg_tuple)
+
+                received_message = bytes_to_message(binary_contents)
+                self.device_response.emit(received_message)
+                logging.debug("Got response from device")
+
+                if MessageCode(received_message.code) == MessageCode.DOCK_DISCOVER_ACK:
+                    self.device_response.emit(f"Discovered DOCKING STATION at {sender_ip_addr}:{sender_port}")
+                    self.dock_discover_signal.emit(sender_ip_addr)
+                elif MessageCode(received_message.code) == MessageCode.CLOUDPLUG_DISCOVER_ACK:
+                    self.device_response.emit(f"Discovered CLOUDPLUG at {sender_ip_addr}:{sender_port}")
+                    self.cloudplug_discover_signal.emit(sender_ip_addr)
 
         # Restart the timer to infinitely do broadcast messages
         self._timer.start(self._TIMEOUT_MSEC)

@@ -8,7 +8,9 @@
 ##
 
 from typing import Union
-import struct, time
+import struct
+import time
+import logging
 
 from PyQt5.QtCore import QByteArray, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtNetwork import QAbstractSocket, QHostAddress, QTcpServer, QTcpSocket
@@ -50,46 +52,40 @@ class TCPServer(QObject):
         self.PORT = 20100
 
         if not self.server.listen(QHostAddress(self.HOST), self.PORT):
-            print(f"Server failed to listen on {self.HOST}:{self.PORT}")
+            logging.error(f"Server failed to listen on {self.HOST}:{self.PORT}")
             return
+
+        self.server.newConnection.connect(self.handle_new_connection)
 
         self.log_signal.emit(f'TCP Server listening on {self.HOST}:{self.PORT}')
 
     def init_dock_connection(self, sender_ip):
         self.connected_dock_dict[sender_ip] = None
 
-        if self.server.hasPendingConnections():
-            print("Trying to handle new dock connection")
+        try:
+            logging.debug("Trying to handle new dock connection")
             self.handle_new_connection()
-        else:
-            print("No pending connection, setting up to handle new connection")
-            self.server.newConnection.connect(self.handle_new_connection)
+        except RuntimeError as ex:
+            logging.debug("No pending connection, setting up to handle new connection")
+            
+            
+            if self.expected_clients == 0:
+                self.server.newConnection.connect(self.handle_new_connection)
+
             self.expected_clients += 1
-
-            attempts = 10
-
-            while attempts > 0:
-                self.handle_new_connection()
-                time.sleep(1)
-                attempts -= 1
 
     def init_cloudplug_connection(self, sender_ip):
         self.connected_cloudplug_dict[sender_ip] = None
 
-        if self.server.hasPendingConnections():
-            print("Trying to handle new cloudplug connection")
+        try:
+            logging.debug("Trying to handle new cloudplug connection")
             self.handle_new_connection()
-        else:
-            print("No pending connection, setting up to handle new connection")
-            self.server.newConnection.connect(self.handle_new_connection)
+        except RuntimeError as ex:
+            logging.debug("No pending connection, setting up to handle new connection")
+            
+            if self.expected_clients == 0:
+                self.server.newConnection.connect(self.handle_new_connection)
             self.expected_clients += 1
-
-            attempts = 10
-
-            while attempts > 0:
-                self.handle_new_connection()
-                time.sleep(1)
-                attempts -= 1
 
 
     def handle_new_connection(self):
@@ -97,9 +93,13 @@ class TCPServer(QObject):
         Handles a pending connection in the connection queue for the TCP Server.
         '''
         client_connection = self.server.nextPendingConnection()
-        client_ip = client_connection.peerAddress().toString()
 
-        #print(f'{client_ip = }')
+        if client_connection is not None:
+            client_ip = client_connection.peerAddress().toString()
+        else:
+            raise RuntimeError("No pending connection")
+
+        logging.debug(f'{client_ip = }')
 
         if client_ip in self.connected_dock_dict:
             self.connected_dock_dict[client_ip] = client_connection
@@ -108,8 +108,9 @@ class TCPServer(QObject):
             self.connected_cloudplug_dict[client_ip] = client_connection
             self.client_connected_signal.emit((DeviceType.CLOUDPLUG, client_ip))
         else:
-            print(f"Unknown IP address: {client_ip}")
-            return
+            logging.error(f"Unknown IP address: {client_ip}")
+            client_connection.close()
+            raise RuntimeError(f"Unknown IP address: {client_ip}")
 
         
         if self.expected_clients > 0:
@@ -154,7 +155,6 @@ class TCPServer(QObject):
                     print(f"Found DOCKING STATION with client ip: {client_ip}")
                     break
         
-        if client_ip == '':
             for key in self.connected_cloudplug_dict:
                 connection: QTcpSocket = self.connected_cloudplug_dict[key]
                 if connection is not None and connection.state() == QAbstractSocket.SocketState.UnconnectedState:
