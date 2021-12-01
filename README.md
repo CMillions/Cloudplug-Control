@@ -18,7 +18,9 @@ SFP+ modules can transmit data at high speeds using many different types of cabl
 The main goal of this project is to design and build a proof-of-concept device, known as the CloudPlug, to qualify the control aspect of programmable pluggable interfaces. In other words, the CloudPlug should be able to mimic specific SFP+ modules and be accepted as genuine by the network switch. In order to do this, a docking station is needed to read and save the internal memory of vendor SFP+ modules. The docking station also allows users to monitor critical parameters of SFP+ modules in order to create stress-cases to program into the CloudPlug, which the CloudPlug can feed to the network switch it’s inserted into. The docking station is controllable through ethernet/IP and the CloudPlug is wirelessly controllable, both through a control software designed by the team. CloudPlugs would allow scaling testing resources by replicating vendor specific logic in software and swapping modules by remote configuration rather than physical replacement.
 
 # Dependencies
-- Python 3.8.10 or later
-- PyQt5
-- python-dotenv
-- mysql-connector-python
+- Python v3.8.10
+- PyQt5 v5.15.2
+- python-dotenv v0.19.0
+- mysql-connector-python v8.0.26
+- pyqtgraph v0.12.3
+- binary-fractions v1.1.0
