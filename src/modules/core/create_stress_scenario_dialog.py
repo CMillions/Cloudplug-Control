@@ -1,5 +1,5 @@
 ##
-# @file create_stress_secnario_dialog.py
+# @file create_stress_scenario_dialog.py
 # @brief Defines the dialog that allows users to
 # create stress scenarios for an SFP.
 #
@@ -47,6 +47,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
             self.handle_submit_button_clicked
         )
 
+        self.selected_stress_type = SupportedParameters.TEMPERATURE
         self.selected_sfp_id = sfp_id
 
         # Set lower and upper bounds on input
@@ -71,6 +72,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         # numbers in
 
         new_index = SupportedParameters(new_index)
+        self.selected_stress_type = new_index
 
         if new_index == SupportedParameters.TEMPERATURE:
             self.unitLabel.setText("C")
@@ -144,6 +146,8 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
             if selected_index == SupportedParameters.TEMPERATURE:
                 for val in float_values:
                     b1, b0 = float_to_signed_twos_complement_bytes(val)
+                    byte_list.append(b1)
+                    byte_list.append(b0)
             elif selected_index == SupportedParameters.VCC:
                 for val in float_values:
                     # User is entering values in Volts, so we have to
@@ -151,15 +155,21 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
                     # stored in memory map. Essentially their value
                     # must be between [0, 6.5535] or it will not be 
                     # submitted
-                        b1, b0 = float_to_unsigned_decimal_bytes(val * 10000.0)
+                    b1, b0 = float_to_unsigned_decimal_bytes(val * 10000.0)
+                    byte_list.append(b1)
+                    byte_list.append(b0)
             elif selected_index == SupportedParameters.TX_BIAS:
                 for val in float_values:
                     # Entered value is mA, so we have to convert back to
                     # LSB of 2 uA. Divide by 2*10^-3 to convert back
                     b1, b0 = float_to_unsigned_decimal_bytes(val / float(2 * 10**-3))
+                    byte_list.append(b1)
+                    byte_list.append(b0)
             elif selected_index == SupportedParameters.RX_PWR or selected_index == SupportedParameters.TX_PWR:
                 for val in float_values:
                     b1, b0 = float_to_unsigned_decimal_bytes(val / float(0.1 * 10**-3))
+                    byte_list.append(b1)
+                    byte_list.append(b0)
         except ValueError:
 
             # Conversion methods will raise ValueError if the input is
@@ -170,8 +180,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
             error_msg.exec()
             return
 
-        byte_list.append(b1)
-        byte_list.append(b0)
+        
 
         #print(byte_list)
 
@@ -184,7 +193,7 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
         sql_connection = SQLConnection()
         cursor = sql_connection.get_cursor()
 
-        query = 'INSERT INTO stress_scenarios (stress_id, sfp_id, scenario_name, `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`, `18`, `19`) VALUES (%s, %s, %s, '
+        query = 'INSERT INTO stress_scenarios (stress_id, stress_type, sfp_id, scenario_name, `0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`, `16`, `17`, `18`, `19`) VALUES (%s, %s, %s, %s, '
         
         # We are inserting byte values
         NUM_BYTES = NUM_VALUES_NEEDED * 2
@@ -194,8 +203,10 @@ class CreateStressScenarioDialog(QDialog, Ui_Dialog):
 
         query += "%s)"
 
-        values = (0, self.selected_sfp_id, str(self.nameLineEdit.text())) + tuple(byte_list)
+        print(query)
 
+        values = (0, self.selected_stress_type.value, self.selected_sfp_id, str(self.nameLineEdit.text())) + tuple(byte_list)
+        print(values)
 
         #print(query, values)
 

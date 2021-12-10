@@ -19,6 +19,10 @@ from dataclasses import dataclass
 class MessageCode(Enum):
     '''! Message codes for CloudPlug network protocol.'''
     DISCOVER = 0
+    READY_FOR_TCP = 1
+    HEARTBEAT = 8
+
+    IDENTIFY_DEVICE = 20
 
     # Docking Station Codes
     DOCK_DISCOVER_ACK           = 100
@@ -38,6 +42,13 @@ class MessageCode(Enum):
     # Cloudplug Codes
     CLOUDPLUG_DISCOVER_ACK = 200
     REPGORAM_CLOUDPLUG = 201
+    RUN_STRESS_SCENARIO = 202
+
+    REPROGRAM_SUCCESS = 205
+    REPROGRAM_FAIL = 206
+
+    STRESS_FAIL = 209
+    STRESS_FINISH = 210
 
 ## The number of bytes in a CloudPlug network protocol message
 MESSAGE_BYTES = 256

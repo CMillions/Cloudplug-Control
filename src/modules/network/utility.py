@@ -8,12 +8,14 @@
 # - Modified on 10/21/21 by Connor DeCamp
 ##
 
-from PyQt5.QtNetwork import QNetworkInterface, QAbstractSocket
 from enum import Enum
+from PyQt5.QtNetwork import QNetworkInterface, QAbstractSocket
+
 
 class DeviceType(Enum):
     DOCKING_STATION = 0
     CLOUDPLUG = 1
+    UNKNOWN = 2
 
 def get_LAN_ip_address() -> str:
     '''! This method retrieves the host machine's IP 

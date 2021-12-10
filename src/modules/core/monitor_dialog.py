@@ -18,7 +18,6 @@ import logging
 from typing import Union
 from PyQt5.QtWidgets import QDialog, QLineEdit
 from PyQt5.QtCore import QTimer, Qt, pyqtSignal
-from sip import voidptr
 
 ##
 # Local Library Imports

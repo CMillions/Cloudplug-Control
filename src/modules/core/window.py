@@ -8,6 +8,11 @@
 # - Modified on 10/19/2021 by Connor DeCamp
 # - Modified on 10/21/2021 by Connor DeCamp
 # - Modified on 11/04/2021 by Connor DeCamp
+# - Modified on 12/01/2021 by Connor DeCamp
+# - Modified on 12/02/2021 by Connor DeCamp
+# - Modified on 12/03/2021 by Connor DeCamp
+# - Modified on 12/05/2021 by Connor DeCamp
+# - Modified on 12/07/2021 by Connor DeCamp
 ##
 
 ##
@@ -21,8 +26,8 @@ import logging
 # Third Party Library Imports
 ##
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QAbstractScrollArea, QErrorMessage,\
-                            QListWidgetItem, QPlainTextEdit,\
+from PyQt5.QtWidgets import QAbstractScrollArea, QDialog, QErrorMessage,\
+                            QListWidgetItem, QMessageBox, QPlainTextEdit,\
                             QTableWidgetItem, QMainWindow
 
 ##
@@ -33,12 +38,13 @@ from modules.core.sfp import SFP
 from modules.core.monitor_dialog import DiagnosticMonitorDialog
 from modules.core.window_autogen import Ui_MainWindow
 from modules.core.memory_map_dialog import MemoryMapDialog
+from modules.core.run_stress_dialog import RunStressDialog
 
 from modules.network.message import MessageCode, Message
-from modules.network.message import ReadRegisterMessage, bytes_to_message
+from modules.network.message import ReadRegisterMessage
 from modules.network.network_threads import BroadcastWorker
 from modules.network.sql_connection import SQLConnection
-from modules.network.tcp_server import TCPServer
+from modules.network.tcp_server import DeviceConnection, TCPServer
 from modules.network.utility import DeviceType
 
 class Window(QMainWindow, Ui_MainWindow):
@@ -59,9 +65,7 @@ class Window(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-
-        # User-defined setup methods
-        self.connect_signal_slots()
+        self.connect_button_signals()
 
         # Allow columns to adjust to their contents
         self.tableWidget.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
@@ -72,8 +76,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.udp_thread = QtCore.QThread()
         self.worker = BroadcastWorker()
         self.worker.moveToThread(self.udp_thread)
-
-        self.worker.device_response.connect(self.handle_udp_client_message)
         self.udp_thread.started.connect(self.worker.on_thread_start)
         self.kill_signal.connect(self.worker.cleanup)
 
@@ -83,10 +85,6 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_thread = QtCore.QThread()
         self.tcp_server = TCPServer()
         self.tcp_server.moveToThread(self.tcp_thread)
-
-        self.worker.dock_discover_signal.connect(self.tcp_server.init_dock_connection)
-        self.worker.cloudplug_discover_signal.connect(self.tcp_server.init_cloudplug_connection)
-
 
         self.tcp_server.client_connected_signal.connect(self.handle_tcp_client_connect)
         self.tcp_server.client_disconnected_signal.connect(self.handle_tcp_client_disconnect)
@@ -98,37 +96,11 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tcp_server.real_time_refresh_signal.connect(self.handle_real_time_refresh)
         self.tcp_server.remote_io_error_signal.connect(self.handle_remote_io_error)
 
-        #self.dock_discover_signal.connect(self.tcp_server.init_dock_connection)
-        #self.cloudplug_discover_signal.connect(self.tcp_server.init_cloudplug_connection)
         self.send_command_signal.connect(self.tcp_server.handle_send_command_signal)
         self.kill_signal.connect(self.tcp_server._close_all_connections)
         
         self.tcp_thread.started.connect(self.tcp_server.open_session)
 
-        # This code was commented out in favor of the above code.
-        # There is no more need for a class that subclasses the QThread
-        # object. Instead, it's moved to a thread that we own.
-
-        #TODO: Think about removing this commented out code
-        # It's a lot to type, so use a temp variable to access the tcp_server of the thread
-        # to connect slots
-        # self.tcp_server_thread = TcpServerThread()
-        #self.tcp_server_thread.client_connected_signal.connect(self.tcpClientConnectHandler)
-        #self.tcp_server_thread.client_disconnected_signal.connect(self.tcpClientDisconnectHandler)
-        #self.tcp_server_thread.update_ui_signal.connect(self.updateUiSignalHandler)
-        #self.tcp_server_thread.log_signal.connect(self.appendToDebugLog)
-        #self.tcp_server_thread.diagnostic_init_a0_signal.connect(self.handle_init_diagnostic_a0)
-        #self.tcp_server_thread.diagnostic_init_a2_signal.connect(self.handle_init_diagnostic_a2)
-        #self.tcp_server_thread.real_time_refresh_signal.connect(self.handle_real_time_refresh)
-        #self.tcp_server_thread.remote_io_error_signal.connect(self.handle_remote_io_error)
-
-        #self.dock_discover_signal.connect(self.tcp_server_thread.initDockConnection)
-        #self.cloudplug_discover_signal.connect(self.tcp_server_thread.initCloudplugConnection)
-
-        #self.send_command_signal.connect(self.tcp_server_thread.send_command_from_ui)
-        #self.kill_signal.connect(self.tcp_server_thread.main_window_close_event_handler)
-
-        #self.tcp_server_thread.start()
         
         ## The diagnostic monitoring window object
         self.diagnostic_monitor_dialog = DiagnosticMonitorDialog(self)
@@ -143,19 +115,20 @@ class Window(QMainWindow, Ui_MainWindow):
             error_dialog.showMessage(f'{ex}')
             error_dialog.exec()
             self.kill_signal.emit(-1)
-            time.sleep(2)
+            time.sleep(0.5)
             raise ex
 
         self.udp_thread.start()
         self.tcp_thread.start()
         
 
-    def connect_signal_slots(self):
+    def connect_button_signals(self):
         # Connect the 'Reprogram Cloudplugs' button to the correct callback
         self.reprogramButton.clicked.connect(self.cloudplug_reprogram_button_handler)
         self.tableWidget.doubleClicked.connect(self.display_sfp_memory_map)
         self.readSfpMemoryButton.clicked.connect(self.clone_sfp_memory_button_handler)
         self.monitorSfpButton.clicked.connect(self.display_monitor_dialog)
+        self.runStressRecordingButton.clicked.connect(self.handle_stress_recording_clicked)
 
     def display_sfp_memory_map(self, clicked_model_index):
 
@@ -252,8 +225,9 @@ class Window(QMainWindow, Ui_MainWindow):
             error_dialog.exec()
             return
 
-        sfp_id = int(selected_sfp_persona[0].data())
+        self.reprogramButton.setDisabled(True)
 
+        sfp_id = int(selected_sfp_persona[0].data())
 
         msg_code = MessageCode.REPGORAM_CLOUDPLUG
         data_to_send = [sfp_id]
@@ -265,8 +239,11 @@ class Window(QMainWindow, Ui_MainWindow):
             msg_tuple = (cloudplug_ip, msg)
             self.send_command_signal.emit(msg_tuple)
 
+        self.rp_start = time.time()
+
     def handle_udp_client_message(self, data: object):
-        '''! Handles the message from a UDP client.'''
+        '''! Handles the message from a UDP client. We don't actually
+        care if they respond or not.'''
         
         self.append_to_debug_log(data)
         '''
@@ -298,7 +275,6 @@ class Window(QMainWindow, Ui_MainWindow):
         '''! Method that handles when the "Clone SFP Memory" button is
         clicked.
         '''
-
         selected_item_in_dock_tab = self.dockingStationList.selectedItems()
 
         # Disable the button until succesful read OR error
@@ -310,7 +286,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
             # The message code is to clone the SFP memory
             code = MessageCode.CLONE_SFP_MEMORY
-            # The text of the message doesn't matter for this message
+            # The text of the message doesn't matter
             msg = 'read the memory please and thanks'
 
             # The server needs to know the IP address of the client
@@ -321,39 +297,34 @@ class Window(QMainWindow, Ui_MainWindow):
             # Emits the signal with the data as the msg_tuple
             # This signal is caught by the TcpServer thread
             self.send_command_signal.emit(msg_tuple)
+
+            self.clone_start_time = time.time()
             
 
-    def handle_tcp_client_connect(self, data: DeviceType):
+    def handle_tcp_client_connect(self, device: DeviceConnection):
         '''! Handles when a TCP client connects.'''
-        self.append_to_debug_log(f"Successful TCP connection from {data}")
+        self.append_to_debug_log(f"Successful TCP connection from {repr(device)}")
 
-        device_type = data[0]
-        device_ip = data[1]
+        if device.type == DeviceType.DOCKING_STATION:
+            self.dockingStationList.addItem(QListWidgetItem(device.ip))
+        elif device.type == DeviceType.CLOUDPLUG:
+            self.listWidget.addItem(QListWidgetItem(device.ip))
 
-        if device_type == DeviceType.DOCKING_STATION:
-            self.dockingStationList.addItem(QListWidgetItem(device_ip))
-        elif device_type == DeviceType.CLOUDPLUG:
-            self.listWidget.addItem(QListWidgetItem(device_ip))
-
-    def handle_tcp_client_disconnect(self, data: DeviceType):
+    def handle_tcp_client_disconnect(self, device: DeviceConnection):
         '''!Handles when a TCP client disconnects.
         
         @param data The DeviceType object to be removed from the software.
         '''
         # For each item in the list of docking stations, find its
         # row and remove it from that list.
-        
-        print(f"Trying to remove data from {data}")
 
-        device_type = data[0]
-        device_ip = data[1]
 
-        if device_type == DeviceType.DOCKING_STATION:
-            for item in self.dockingStationList.findItems(device_ip, QtCore.Qt.MatchExactly):
+        if device.type == DeviceType.DOCKING_STATION:
+            for item in self.dockingStationList.findItems(device.ip, QtCore.Qt.MatchExactly):
                 row_of_item = self.dockingStationList.row(item)
                 self.dockingStationList.takeItem(row_of_item) # removeListItem didn't work
-        elif device_type == DeviceType.CLOUDPLUG:
-            for item in self.listWidget.findItems(device_ip, QtCore.Qt.MatchExactly):
+        elif device.type == DeviceType.CLOUDPLUG:
+            for item in self.listWidget.findItems(device.ip, QtCore.Qt.MatchExactly):
                 row_of_item = self.listWidget.row(item)
                 self.listWidget.takeItem(row_of_item)
 
@@ -368,9 +339,29 @@ class Window(QMainWindow, Ui_MainWindow):
             self.append_to_debug_log("A docking station successfully, cloned SFP memory")
             self.readSfpMemoryButton.setEnabled(True)
             self._refresh_sfp_table()
+            msg_dialog = QMessageBox()
+            msg_dialog.setText(f"Successfully read transceiver memory! Time: {time.time() - self.clone_start_time:.3f} sec")
+            msg_dialog.exec()
         elif code == MessageCode.CLONE_SFP_MEMORY_ERROR:
             self.append_to_debug_log("A docking station had an error reading SFP memory.")
             self.readSfpMemoryButton.setEnabled(True)
+            error_message = QErrorMessage()
+            error_message.showMessage("Failed to read transceiver memory!")
+            error_message.exec()
+        elif code == MessageCode.REPROGRAM_SUCCESS:
+            self.reprogramButton.setDisabled(False)
+            msg_dialog = QMessageBox()
+            msg_dialog.setText(f"Successfully reprogrammed CloudPlug! {time.time() - self.rp_start:.3f} sec")
+            msg_dialog.exec()
+        elif code == MessageCode.REPROGRAM_FAIL:
+            self.reprogramButton.setDisabled(False)
+            error_message = QErrorMessage()
+            error_message.showMessage(f"Failed to reprogram CloudPlug! {time.time() - self.rp_start:.3f} sec")
+            error_message.exec()
+        elif code == MessageCode.STRESS_FAIL:
+            error_message = QErrorMessage()
+            error_message.showMessage(f"Failed to run stress scenario!")
+            error_message.exec()
 
     def _refresh_sfp_table(self):
         '''! Refreshes the SFP table on the main screen.
@@ -510,7 +501,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.send_command_signal.emit((self.diagnostic_monitor_dialog.dock_ip, command))
 
     def handle_real_time_refresh(self, cmd: ReadRegisterMessage):
-        '''! Handles the refreshing of diagnostic data from the
+        '''! Handles refreshing diagnostic data from the
         a docking station.
 
         @param cmd The ReadRegisterMessage object that contains the updated
@@ -531,6 +522,45 @@ class Window(QMainWindow, Ui_MainWindow):
         '''
         self.append_to_debug_log(cmd)
         self.diagnostic_monitor_dialog.close()
+
+    def handle_stress_recording_clicked(self):
+        # Need to show user available stress recordings
+        # for the selected Persona
+        selected_cloudplugs = self.listWidget.selectedItems()
+        logging.debug(f'User has selected {len(selected_cloudplugs)} cloudplugs')
+
+        # If the user has not selected anything, show an error message and
+        # return from this method
+        if len(selected_cloudplugs) < 1:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage("You must choose at least 1 CloudPlug!")
+            error_dialog.exec()
+            return
+
+        selected_sfp_persona = self.tableWidget.selectionModel().selectedIndexes()
+
+        if len(selected_sfp_persona) == 0:
+            error_dialog = QErrorMessage()
+            error_dialog.showMessage("You must select an SFP from the table!")
+            return
+
+        sfp_id = int(selected_sfp_persona[0].data())
+
+        # Display list of Stress recordings
+
+        stress_dialog = RunStressDialog(sfp_id)
+        stress_dialog.command_signal.connect(self.send_stress_recording)
+        stress_dialog.exec()
+
+    def send_stress_recording(self, stress_id: int):
+        msg = ReadRegisterMessage(
+            MessageCode.RUN_STRESS_SCENARIO,
+            '',
+            0x00,
+            [stress_id]
+        )
+        cloudplug_ip = self.listWidget.selectedItems()[0].text()
+        self.send_command_signal.emit((cloudplug_ip, msg))
 
     ##
     # Utility functions
@@ -564,8 +594,3 @@ class Window(QMainWindow, Ui_MainWindow):
             # Format the local time into HH:MM:SS and append to the debug log
             formatted_time = time.strftime('%H:%M:%S', time.localtime())
             text_edit.appendPlainText(f'[{formatted_time}]: {text}')
-
-
-
-
-    

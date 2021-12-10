@@ -53,9 +53,10 @@ def main():
     main_window.setWindowTitle('CloudPlug Control')
     main_window.show()
 
-
-    sys.exit(app.exec_())
-
+    try:
+        sys.exit(app.exec_())
+    except Exception as ex:
+        logging.error(ex)
     
 
 if __name__ == '__main__':

@@ -101,6 +101,7 @@ def main():
     query = (
         "CREATE TABLE `stress_scenarios` ("
         "    `stress_id` INT AUTO_INCREMENT PRIMARY KEY,"
+        "    `stress_type` INT,"
         "    `sfp_id` INT,"
         "    `scenario_name` VARCHAR(255),"
         "    FOREIGN KEY (`sfp_id`) REFERENCES `page_a0`(`id`) ON DELETE CASCADE,"

@@ -38,8 +38,8 @@ class SQLConnection:
         env_path = '../.env'
         load_dotenv(dotenv_path=env_path)
 
-        self.connection = None
-        self.cursor = None
+        self._connection = None
+        self._cursor = None
         
         self.get_connection()
 
@@ -57,7 +57,7 @@ class SQLConnection:
             #print(f'{db_host = }\t{db_user = }\t{db_pass = }')
             TIMEOUT_SEC = 5
             logging.debug(f"Trying to connect to database with timeout: {TIMEOUT_SEC} seconds")
-            self.connection = mysql.connector.connect(
+            self._connection = mysql.connector.connect(
                 host=db_host,
                 user=db_user,
                 password=db_pass,
@@ -67,20 +67,20 @@ class SQLConnection:
             )
             logging.debug(f'Connected to db name: {db_name}')
 
-            self.cursor = self.connection.cursor()
+            self._cursor = self._connection.cursor()
 
         except Exception as ex:
             logging.error(f'Error connecting to SFP database: {ex}')
-            self.connection = None
-            self.cursor = None
+            self._connection = None
+            self._cursor = None
             raise Exception(ex)
 
     def get_cursor(self):
-        return self.connection.cursor()
+        return self._connection.cursor()
 
     def close(self):
-        if self.connection is not None:
-            self.connection.close()
+        if self._connection is not None:
+            self._connection.close()
 
             logging.debug("Closed connection to database")
 
