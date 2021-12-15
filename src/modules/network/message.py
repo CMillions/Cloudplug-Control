@@ -47,6 +47,7 @@ class MessageCode(Enum):
     REPROGRAM_SUCCESS = 205
     REPROGRAM_FAIL = 206
 
+    STRESS_START = 208
     STRESS_FAIL = 209
     STRESS_FINISH = 210
 

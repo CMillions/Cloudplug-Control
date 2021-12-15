@@ -265,6 +265,9 @@ class TCPServer(QObject):
         elif command.code == MessageCode.STRESS_FAIL:
             self.log_signal.emit('Failed to run stress scenario!')
             self.update_ui_signal.emit(MessageCode.STRESS_FAIL)
+        elif command.code == MessageCode.STRESS_START:
+            self.log_signal.emit('Beginning stress scenario, monitor your network switch!')
+            self.update_ui_signal.emit(MessageCode.STRESS_START)
 
 
     def handle_send_command_signal(self, ip_msg_tuple):

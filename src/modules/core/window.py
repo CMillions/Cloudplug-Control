@@ -362,6 +362,10 @@ class Window(QMainWindow, Ui_MainWindow):
             error_message = QErrorMessage()
             error_message.showMessage(f"Failed to run stress scenario!")
             error_message.exec()
+        elif code == MessageCode.STRESS_START:
+            msg_dialog = QMessageBox()
+            msg_dialog.setText("CloudPlug initialized, beginning stress scenario. Watch your network switch!")
+            msg_dialog.exec()
 
     def _refresh_sfp_table(self):
         '''! Refreshes the SFP table on the main screen.
